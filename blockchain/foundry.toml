@@ -1,0 +1,8 @@
+# foundry.toml
+
+[default]
+src = "contracts"
+out = "artifacts"
+libs = ["lib"]
+test = "test"
+cache_path = "cache"
