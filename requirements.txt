@@ -1,0 +1,4 @@
+langchain
+tensorflow
+opendp
+requests
