@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.5.11;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.20;
 
-
-// Minimal Ownable implementation for Solidity 0.5.11
+// Minimal Ownable implementation for Solidity ^0.8.x
 contract Ownable {
     address public owner;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    constructor() public {
+    constructor() {
         owner = msg.sender;
         emit OwnershipTransferred(address(0), owner);
     }
@@ -19,7 +17,7 @@ contract Ownable {
         _;
     }
 
-    function transferOwnership(address newOwner) public onlyOwner {
+    function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "Ownable: new owner is the zero address");
         emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
