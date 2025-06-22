@@ -7,3 +7,6 @@ libs = ["lib"]
 test = "test"
 cache_path = "cache"
 solc-version = "0.8.20"
+
+[etherscan]
+sepolia = { key = "${ETHERSCAN_API_KEY}" }
