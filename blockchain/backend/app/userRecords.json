@@ -1,0 +1,24 @@
+{
+  "users": [
+    { "id": "user1", "cibilScore": 750 },
+    { "id": "user2", "cibilScore": 680 },
+    { "id": "user3", "cibilScore": 620 },
+    { "id": "user4", "cibilScore": 700 },
+    { "id": "user5", "cibilScore": 780 },
+    { "id": "user6", "cibilScore": 720 },
+    { "id": "user7", "cibilScore": 580 },
+    { "id": "user8", "cibilScore": 760 },
+    { "id": "user9", "cibilScore": 690 },
+    { "id": "user10", "cibilScore": 800 },
+    { "id": "user11", "cibilScore": 740 },
+    { "id": "user12", "cibilScore": 710 },
+    { "id": "user13", "cibilScore": 790 },
+    { "id": "user14", "cibilScore": 670 },
+    { "id": "user15", "cibilScore": 770 },
+    { "id": "user16", "cibilScore": 730 },
+    { "id": "user17", "cibilScore": 820 },
+    { "id": "user18", "cibilScore": 660 },
+    { "id": "user19", "cibilScore": 750 },
+    { "id": "user20", "cibilScore": 780 }
+  ]
+}

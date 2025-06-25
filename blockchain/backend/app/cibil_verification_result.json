@@ -1,0 +1,30 @@
+{
+  "transactionInfo": {
+    "blockHash": "0x222271629f18f9bdccf0871207909f69c11d9d563e6c7023847620551544c076",
+    "status": "inBlock",
+    "txHash": "0xbc3dc8eb9c4e531137e8b76bab59063b0c47c2ecc93cba1326dbb8be426201ee",
+    "proofType": "groth16",
+    "domainId": 1,
+    "aggregationId": 5,
+    "statement": "0x8d17f7bb58cab4e661df168a1da298ef83dc321e76c5ff36811cc30fcf0276f1",
+    "extrinsicIndex": 2,
+    "feeInfo": {
+      "payer": "xpjrp4vX8CDvqSvxm5R2eaHQXcEzy8AVBDYBExNycYesdLNdo",
+      "actualFee": "25898116950000000",
+      "tip": "0",
+      "paysFee": "Yes"
+    },
+    "weightInfo": {
+      "refTime": "5179622191",
+      "proofSize": "187784"
+    },
+    "txClass": "Normal"
+  },
+  "statement": "0x8d17f7bb58cab4e661df168a1da298ef83dc321e76c5ff36811cc30fcf0276f1",
+  "aggregationId": 5,
+  "proofType": "CIBIL_Score_Verification",
+  "timestamp": "2025-06-23T21:12:25.047Z",
+  "threshold": "700",
+  "merkleRoot": "11521243457696682706046175786838759013455327695077507856533745763241668708059",
+  "domainId": 1
+}

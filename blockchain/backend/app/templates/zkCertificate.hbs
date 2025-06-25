@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{certificateTitle}}</title>
+    <style>
+      /* Set the PDF page size and remove default margins */
+      @page {
+        size: A4;
+        margin: 0;
+      }
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        font-family: 'Times New Roman', serif;
+        background: #f7f7f7;
+      }
+      /* Outer container that spans the entire page */
+      .certificate-container {
+        width: 100%;
+        height: 100%;
+        padding: 40px;
+        box-sizing: border-box;
+        border: 10px solid #8c8c8c;
+        background: #fff;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+      /* Inner certificate element set as a flex container */
+      .certificate-border {
+        flex: 1;
+        border: 5px solid #bfa867;
+        padding: 20px;
+        box-sizing: border-box;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+      /* Watermark remains absolutely positioned */
+      .watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 80px;
+        color: rgba(200, 200, 200, 0.2);
+        z-index: 0;
+        pointer-events: none;
+        white-space: nowrap;
+      }
+      /* Header styling */
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+        position: relative;
+        z-index: 1;
+      }
+      .header h1 {
+        font-size: 36px;
+        margin: 0;
+        font-weight: bold;
+      }
+      .header h2 {
+        font-size: 24px;
+        margin: 5px 0 0 0;
+      }
+      /* Content section takes available space */
+      .content {
+        flex: 1;
+        text-align: left;
+        margin: 20px 40px;
+        font-size: 16px;
+        position: relative;
+        z-index: 1;
+      }
+      .content .section {
+        margin-bottom: 20px;
+      }
+      .content p {
+        margin: 5px 0;
+        line-height: 1.5;
+      }
+      /* Skills styling */
+      .skills ul {
+        list-style: none;
+        padding: 0;
+      }
+      .skills li {
+        background: #f0f0f0;
+        display: inline-block;
+        padding: 8px 12px;
+        margin: 5px;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      /* Signature and footer */
+      .signature {
+        width: 250px;
+        border-top: 1px solid #000;
+        margin: 20px auto 0 auto;
+        text-align: center;
+        padding-top: 10px;
+        position: relative;
+        z-index: 1;
+      }
+      .footer {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+        position: relative;
+        z-index: 1;
+      }
+      a {
+        color: #0645ad;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="certificate-container">
+      <div class="certificate-border">
+        <!-- Watermark displaying company name -->
+        <div class="watermark">ZkCertify</div>
+        <div class="header">
+          <h1>{{certificateTitle}}</h1>
+          <h2>Awarded to {{user.name}}</h2>
+        </div>
+        <div class="content">
+          <div class="section">
+            <p><strong>Wallet Address:</strong> {{user.wallet}}</p>
+            <p><strong>Bio:</strong> {{user.bio}}</p>
+            <p><strong>Email:</strong> {{user.email}}</p>
+            <p><strong>GitHub:</strong> <a href="{{user.github}}">{{user.github}}</a></p>
+            <p><strong>LinkedIn:</strong> <a href="{{user.linkedin}}">{{user.linkedin}}</a></p>
+            <p><strong>Portfolio:</strong> <a href="{{user.portfolio}}">{{user.portfolio}}</a></p>
+          </div>
+          {{#if skills}}
+          <div class="section skills">
+            <h3>Skills</h3>
+            <ul>
+              {{#each skills}}
+              <li>{{this}}</li>
+              {{/each}}
+            </ul>
+          </div>
+          {{/if}}
+          <div class="section">
+            <p>
+              This certificate officially recognizes that the individual has achieved Zero-Knowledge (zk) certification,
+              demonstrating excellence in blockchain technology and cryptographic expertise.
+            </p>
+          </div>
+        </div>
+        <div class="signature">
+          <p>Authorized by ZkCertify</p>
+        </div>
+        <div class="footer">
+          <p>&copy; 2023 ZkCertify. All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "verificationID": null,
+  "verifications": {
+    "verified": [
+      {
+        "userId": "user1",
+        "timestamp": 1739444809450,
+        "verificationHash": "1400"
+      },
+      {
+        "userId": "user9",
+        "timestamp": 1739445183201,
+        "verificationHash": "1400"
+      },
+      {
+        "userId": "user9",
+        "timestamp": 1739445331409,
+        "verificationHash": "1400"
+      },
+      {
+        "userId": "user1",
+        "timestamp": 1739445408827,
+        "verificationHash": "1400"
+      }
+    ],
+    "threshold": 700
+  },
+  "spentProofs": {}
+}

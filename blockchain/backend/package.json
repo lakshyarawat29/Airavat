@@ -1,0 +1,45 @@
+{
+  "name": "zk-cgpa-verification",
+  "alias": "cgpa",
+  "version": "1.0.0",
+  "description": "Zero-knowledge CGPA verification system. Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.",
+  "main": "src/server.js",
+  "secondaryMain": "backend.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "compile-circuit": "cd circuit && make clean && make setup",
+    "clean": "rm -rf circuit/build && rm -rf circuit/setup",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "zkAyush",
+  "license": "MIT",
+  "dependencies": {
+    "@zk-kit/groth16": "^0.5.0",
+    "app-root-path": "^3.1.0",
+    "big-integer": "^1.6.52",
+    "body-parser": "^1.20.2",
+    "circomlib": "^2.0.5",
+    "circomlibjs": "^0.1.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "ethers": "^6.13.5",
+    "express": "^4.21.2",
+    "groq-sdk": "^0.15.0",
+    "http-server": "^14.1.1",
+    "merkletreejs": "^0.4.1",
+    "pdf-master": "^1.1.0",
+    "prompt-sync": "^4.2.0",
+    "snarkjs": "^0.7.5",
+    "xlsx": "^0.18.5",
+    "yargs": "^17.7.2",
+    "zkverifyjs": "^0.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
