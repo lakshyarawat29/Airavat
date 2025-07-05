@@ -2,7 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 
-const verifyRoutes = require("../routes/verifyRoutes");
+const verifyCibilRoutes = require("../routes/verifyRoutes");
 const budgetRoutes = require("../routes/budgetRoutes");
 const app = express();
 const PORT = 4000;
@@ -28,7 +28,7 @@ app.get("/", (req, res) => {
 });
 
 // Routes
-app.use("/verify", verifyRoutes);
+app.use("/verify-cibil", verifyCibilRoutes);
 app.use("/verify-budget", budgetRoutes);
 
 app.listen(PORT, () => {
