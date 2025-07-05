@@ -10,7 +10,7 @@
     "test": "test"
   },
   "scripts": {
-    "start": "node src/index.js",
+    "start": "node app/src/index.js",
     "compile-circuit": "cd circuit && make clean && make setup",
     "clean": "rm -rf circuit/build && rm -rf circuit/setup",
     "test": "echo \"Error: no test specified\" && exit 1"

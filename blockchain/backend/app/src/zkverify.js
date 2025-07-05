@@ -1,232 +1,118 @@
 // zkverify.js
+
 const snarkjs = require("snarkjs");
 const path = require("path");
 const fs = require("fs");
-const { zkVerifySession, Library, CurveType, ZkVerifyEvents } = require("zkverifyjs");
+const { zkVerifySession, ZkVerifyEvents, Library, CurveType } = require("zkverifyjs");
 
-require("dotenv").config();
+require("dotenv").config({ path: ".env" });
+require("dotenv").config({ path: ".env.secrets" });
 
 async function verify(proof, publicSignals) {
-  const ZKV_SEED_PHRASE = process.env.ZKV_SEED_PHRASE;
-  const DOMAIN_ID = parseInt(process.env.DOMAIN_ID || "1");
-
-  console.log("Environment check:");
-  console.log("ZKV_SEED_PHRASE exists:", !!ZKV_SEED_PHRASE);
-  console.log("DOMAIN_ID:", DOMAIN_ID);
-
-  let session;
-  let statement, aggregationId;
+  const ZKV_SEED_PHRASE = "winner stamp fabric because gallery embody oyster achieve resemble bullet business fee";
 
   try {
-    // Check if CIBIL score exceeds threshold
-    if (publicSignals[0] === "0") {
-      throw new Error("THRESHOLD_NOT_MET: User's CIBIL score is below required threshold");
+    if (publicSignals[1] === "0") {
+      throw new Error("THRESHOLD_NOT_MET: Student score is below required threshold of 1400");
     }
 
-    // Validate seed phrase
-    if (!ZKV_SEED_PHRASE || ZKV_SEED_PHRASE.trim() === '') {
-      throw new Error("ZKV_SEED_PHRASE is not set in environment variables");
-    }
-
-    // Load verification key
     const verificationPath = path.join(__dirname, "../../circuit/setup/verification_key.json");
     const vk = JSON.parse(fs.readFileSync(verificationPath, "utf8"));
 
-    console.log("Starting zkVerify session...");
-
-    // Start zkVerify session
-    session = await zkVerifySession
+    // Establish zkVerify session
+    const session = await zkVerifySession
       .start()
-      .Volta()
+      .Volta() 
       .withAccount(ZKV_SEED_PHRASE);
-    
-    console.log("✅ Connected to zkVerify Volta Testnet");
+
+    let statement, aggregationId;
+
+    // Subscribe to aggregation receipt events
+    session.subscribe([
+      {
+        event: ZkVerifyEvents.NewAggregationReceipt,
+        callback: async (eventData) => {
+          console.log("New aggregation receipt:", eventData);
+          if (aggregationId == parseInt(eventData.data.aggregationId.replace(/,/g, ''))) {
+            let statementpath = await session.getAggregateStatementPath(
+              eventData.blockHash,
+              parseInt(eventData.data.domainId),
+              parseInt(eventData.data.aggregationId.replace(/,/g, '')),
+              statement
+            );
+            console.log("Statement path:", statementpath);
+            const statementproof = {
+              ...statementpath,
+              domainId: parseInt(eventData.data.domainId),
+              aggregationId: parseInt(eventData.data.aggregationId.replace(/,/g, '')),
+            };
+            fs.writeFileSync("aggregation.json", JSON.stringify(statementproof, null, 2));
+          }
+        },
+        options: { domainId: 0 },
+      },
+    ]);
+
+    // Submit proof for verification
+    const { events } = await session.verify()
+      .groth16({ library: Library.snarkjs, curve: CurveType.bn128 })
+      .execute({
+        proofData: {
+          vk: vk,
+          proof: proof,
+          publicSignals: publicSignals
+        },
+        domainId: 0
+      });
 
     return new Promise((resolve, reject) => {
       let isResolved = false;
-      let transactionInfo = null;
 
-      // Subscribe to aggregation events
-      session.subscribe([
-        {
-          event: ZkVerifyEvents.NewAggregationReceipt,
-          callback: async (eventData) => {
-            console.log("📊 New aggregation receipt:", eventData);
-            
-            if (aggregationId == parseInt(eventData.data.aggregationId.replace(/,/g, ''))) {
-              try {
-                let statementPath = await session.getAggregateStatementPath(
-                  eventData.blockHash,
-                  parseInt(eventData.data.domainId),
-                  parseInt(eventData.data.aggregationId.replace(/,/g, '')),
-                  statement
-                );
-                
-                console.log("📝 Statement path:", statementPath);
-                
-                const attestationData = {
-                  ...statementPath,
-                  domainId: parseInt(eventData.data.domainId),
-                  aggregationId: parseInt(eventData.data.aggregationId.replace(/,/g, '')),
-                  transactionInfo: transactionInfo,
-                  timestamp: new Date().toISOString(),
-                  proofType: "CIBIL_Score_Verification",
-                  threshold: publicSignals[2],
-                  merkleRoot: publicSignals[1]
-                };
-                
-                // Save aggregation data
-                fs.writeFileSync("cibil_aggregation.json", JSON.stringify(attestationData, null, 2));
-                console.log("📁 Aggregation data saved to cibil_aggregation.json");
-                
-                if (!isResolved) {
-                  isResolved = true;
-                  resolve({
-                    success: true,
-                    transactionInfo: transactionInfo,
-                    aggregationData: attestationData,
-                    message: "CIBIL score verification and aggregation completed successfully"
-                  });
-                }
-              } catch (pathError) {
-                console.error("❌ Error getting statement path:", pathError);
-              }
-            }
-          },
-          options: { domainId: DOMAIN_ID },
-        },
-      ]);
+      events.on(ZkVerifyEvents.IncludedInBlock, (eventData) => {
+        console.log("Included in block", eventData);
+        statement = eventData.statement;
+        aggregationId = eventData.aggregationId;
+      });
 
-      // Submit proof
-      const submitProof = async () => {
-        try {
-          console.log(`📤 Submitting proof to domain ${DOMAIN_ID}...`);
-          
-          const { events } = await session
-            .verify()
-            .groth16({
-              library: Library.snarkjs,
-              curve: CurveType.bn128
-            })
-            .execute({
-              proofData: {
-                vk: vk,
-                proof: proof,
-                publicSignals: publicSignals
-              },
-              domainId: DOMAIN_ID
-            });
+      events.on(ZkVerifyEvents.Finalized, (eventData) => {
+        console.log('Transaction finalized:', eventData);
+        
+        // Resolve immediately after finalization - we don't need to wait for aggregation
+        if (!isResolved) {
+          isResolved = true;
+          setTimeout(() => {
+            session.close().catch(() => {}); // Close session but don't wait
+            resolve(true);
+          }, 100); // Small delay to allow aggregation to start
+        }
+      });
 
-          // Listen to events
-          events.on(ZkVerifyEvents.IncludedInBlock, (eventData) => {
-            console.log("✅ Included in block:", eventData);
-            statement = eventData.statement;
-            aggregationId = eventData.aggregationId;
-            transactionInfo = eventData;
-            
-            // Save transaction info immediately
-            const verificationResult = {
-              transactionInfo: eventData,
-              statement: eventData.statement,
-              aggregationId: eventData.aggregationId,
-              proofType: "CIBIL_Score_Verification",
-              timestamp: new Date().toISOString(),
-              threshold: publicSignals[2],
-              merkleRoot: publicSignals[1],
-              domainId: DOMAIN_ID
-            };
-            fs.writeFileSync("cibil_verification_result.json", JSON.stringify(verificationResult, null, 2));
-            console.log("📁 Transaction info saved to cibil_verification_result.json");
-          });
+      events.on('error', (error) => {
+        console.error("Event error:", error);
+        if (!isResolved) {
+          isResolved = true;
+          session.close().catch(() => {});
+          reject(error);
+        }
+      });
 
-          events.on(ZkVerifyEvents.Finalized, (eventData) => {
-            console.log("✅ Transaction finalized:", eventData);
-            
-            // Since we have a domain (1), wait for aggregation
-            // Don't resolve immediately for domain 1
-            if (DOMAIN_ID === 0 && !isResolved) {
-              isResolved = true;
-              resolve({
-                success: true,
-                transactionInfo: eventData,
-                message: "CIBIL score verification completed successfully (no aggregation)"
-              });
-            }
-          });
-
-          events.on(ZkVerifyEvents.ErrorEvent, (error) => {
-            console.error("❌ Event error:", error);
-            
-            // Handle connection errors gracefully
-            if (error.error && error.error.includes('disconnected')) {
-              console.log("⚠️ Connection lost, but transaction may have succeeded");
-              return; // Don't reject immediately for connection issues
-            }
-            
-            if (!isResolved) {
-              isResolved = true;
-              reject({
-                success: false,
-                error: error,
-                message: "CIBIL score verification failed"
-              });
-            }
-          });
-
-        } catch (submitError) {
-          console.error("❌ Error submitting proof:", submitError);
-          if (!isResolved) {
-            isResolved = true;
-            reject({
-              success: false,
-              error: submitError,
-              message: "Failed to submit proof for verification"
-            });
+      // Timeout after 60 seconds
+      setTimeout(() => {
+        if (!isResolved) {
+          isResolved = true;
+          session.close().catch(() => {});
+          if (statement && aggregationId) {
+            resolve(true);
+          } else {
+            reject(new Error('Verification timeout - proof not processed'));
           }
         }
-      };
-
-      // Execute proof submission
-      submitProof();
-
-      // Timeout for aggregation (2 minutes for domain 1)
-      setTimeout(() => {
-        if (!isResolved && transactionInfo) {
-          console.log("⏰ Aggregation timeout, but transaction was successful");
-          isResolved = true;
-          resolve({
-            success: true,
-            transactionInfo: transactionInfo,
-            note: "Transaction successful, aggregation may still be pending",
-            message: "CIBIL score verification completed (aggregation timeout)"
-          });
-        } else if (!isResolved) {
-          isResolved = true;
-          reject({
-            success: false,
-            error: new Error("Verification timeout"),
-            message: "CIBIL score verification timed out"
-          });
-        }
-      }, 120000); // 2 minute timeout
+      }, 60000);
     });
 
   } catch (error) {
-    console.error("❌ Verification process failed:", error);
-    throw {
-      success: false,
-      error: error,
-      message: "CIBIL score verification failed: " + error.message
-    };
-  } finally {
-    if (session) {
-      try {
-        await session.close();
-        console.log("🔌 zkVerify session closed");
-      } catch (closeError) {
-        console.error("❌ Error closing session:", closeError);
-      }
-    }
+    console.error("Verification process failed:", error);
+    return false;
   }
 }
 
