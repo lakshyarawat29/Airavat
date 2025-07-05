@@ -37,7 +37,7 @@
     "snarkjs": "^0.7.5",
     "xlsx": "^0.18.5",
     "yargs": "^17.7.2",
-    "zkverifyjs": "^0.6.0"
+    "zkverifyjs": "^0.14.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.7"
