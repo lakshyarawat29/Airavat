@@ -5,7 +5,6 @@ const path = require("path");
 const crypto = require("crypto");
 
 const sampleUsersPath = path.join(__dirname, "../sampleUsers.json");
-const sampleUsers = JSON.parse(fs.readFileSync(sampleUsersPath, "utf8"));
 
 /**
  * Build a Merkle tree from an array of leaves.
@@ -104,97 +103,127 @@ function getUserIDHash(id) {
 
 /**
  * Generate the Merkle tree for user records.
- * Each leaf is computed as: Poseidon( userIDHash, totalSpend )
+ * Each leaf is computed as: Poseidon( userIDHash, spendsHash )
  */
-async function generateUserMerkleTree(userId, userSpends) {
+async function generateUserMerkleTree() {
     const poseidon = await circomlibjs.buildPoseidonOpt();
-    const userTotalSpend = userSpends.reduce((sum, spend) => sum + spend, 0);
+    const users = JSON.parse(fs.readFileSync(sampleUsersPath, "utf8"));
 
-    // Leaf hash function: combine userIDHash and total spend.
+    // Leaf hash function: combine userIDHash and spendsHash.
     const hashUserLeaf = (user) => {
-        let totalSpend;
-        if (user.id === userId) {
-            // For the target user, use the provided spends
-            totalSpend = BigInt(userTotalSpend);
-        } else {
-            // For other users, use their sample spends
-            totalSpend = BigInt(user.spends.reduce((sum, spend) => sum + spend, 0));
-        }
-        return poseidon([getUserIDHash(user.id), totalSpend]);
+        const userIDHash = BigInt(user.userIDHash);
+        const spendsHash = BigInt(user.spendsHash);
+        return poseidon([userIDHash, spendsHash]);
     };
 
     const hashInternalNode = (left, right) => poseidon([left, right]);
 
     const treeDepth = 10;
     const maxLeaves = 2 ** treeDepth;
-    
     const leaves = Array.from({ length: maxLeaves }, (_, index) => {
-        if (index < sampleUsers.length) {
-            console.log(`Processing user ${index + 1}: ${sampleUsers[index].id}`);
-            return sampleUsers[index];
+        if (index < users.length) {
+            console.log(`Processing user ${index + 1}: ${users[index].id}`);
+            return users[index];
         } else {
-            return sampleUsers[sampleUsers.length - 1];
+            return users[users.length - 1];
         }
     });
 
-    console.log(`Total users: ${sampleUsers.length}. Total leaves (with padding): ${leaves.length}.`);
+    console.log(`Total users: ${users.length}. Total leaves (with padding): ${leaves.length}.`);
     const merkleTreeInstance = await merkleTree(leaves, hashUserLeaf, hashInternalNode);
     const merkleRoot = poseidon.F.toString(merkleTreeInstance.getRoot());
     console.log("Merkle Tree Root:", merkleRoot);
-    return { merkleTreeInstance, poseidon, userTotalSpend };
+    return { merkleTreeInstance, poseidon };
 }
 
 /**
- * Generate a zero-knowledge proof that a given user's total spending is under the budget threshold.
+ * Generate a zero-knowledge proof that a given user's spending is within budget.
  * @param {string} userId - The user's identifier (e.g., "user1").
- * @param {Array<number>} userSpends - Array of user's spending amounts.
- * @param {number} budgetThreshold - The budget threshold.
+ * @param {Array<number>} spends - Array of user's spending amounts.
+ * @param {number} threshold - The budget threshold.
  * @returns {Object} Proof and public signals.
  */
-async function generateBudgetProof(userId, userSpends, budgetThreshold) {
-    const userIndex = sampleUsers.findIndex(user => user.id === userId);
+async function generateBudgetProof(userId, spends, threshold) {
+    const users = JSON.parse(fs.readFileSync(sampleUsersPath, "utf8"));
+    const userIndex = users.findIndex(user => user.id === userId);
     if (userIndex === -1) {
         throw new Error(`User with id ${userId} not found.`);
     }
-    const userRecord = sampleUsers[userIndex];
+    const userRecord = users[userIndex];
 
-    const { merkleTreeInstance, poseidon, userTotalSpend } = await generateUserMerkleTree(userId, userSpends);
+    const { merkleTreeInstance, poseidon } = await generateUserMerkleTree();
     const merkleRoot = poseidon.F.toString(merkleTreeInstance.getRoot());
 
-    const userIDHash = getUserIDHash(userRecord.id);
-    const thresholdBigInt = BigInt(budgetThreshold);
+    // Convert spends to BigInt and calculate hash
+    const spendsArray = spends.map(spend => BigInt(spend));
+    const calculatedSpendsHash = poseidon(spendsArray);
+
+    // Verify the provided spends match the registered hash
+    const calculatedHashStr = poseidon.F.toString(calculatedSpendsHash);
+    const registeredHashStr = userRecord.spendsHash;
+    
+    console.log("Calculated hash:", calculatedHashStr);
+    console.log("Registered hash:", registeredHashStr);
+    console.log("Match:", calculatedHashStr === registeredHashStr);
+
+    if (calculatedHashStr !== registeredHashStr) {
+        throw new Error("Provided spends do not match registered spending hash");
+    }
+
+    const userIDHash = BigInt(userRecord.userIDHash);
+    const thresholdBigInt = BigInt(threshold);
 
     const proofData = merkleTreeInstance.getMerkleProof(userIndex);
-    const authPath = proofData.lemma.map(x => poseidon.F.toString(x));
+    
+    // Debug: log the proof data structure
+    console.log("Proof data structure:", {
+        pathLength: proofData.path.length,
+        lemmaLength: proofData.lemma.length,
+        path: proofData.path,
+        lemma: proofData.lemma.map(x => poseidon.F.toString(x))
+    });
 
-    // Pad spends array to required size (5 elements)
-    const paddedSpends = [...userSpends];
-    while (paddedSpends.length < 5) {
-        paddedSpends.push(0);
+    // Convert path directions to pathElements for the circuit
+    const pathElements = [];
+
+    // The lemma array contains: [leaf, sibling1, sibling2, ..., root]
+    // We need siblings only (skip leaf and root)
+    for (let i = 1; i < proofData.lemma.length - 1 && pathElements.length < 10; i++) {
+        pathElements.push(poseidon.F.toString(proofData.lemma[i]));
     }
+
+    // Pad pathElements to depth 10
+    while (pathElements.length < 10) {
+        pathElements.push("0");
+    }
+
+    console.log("Final pathElements:", pathElements);
+    console.log("User index (pathIndex):", userIndex);
 
     // Circuit inputs for budget verification
     const circuitInputs = {
-        threshold: thresholdBigInt,
-        merkleRoot: BigInt(merkleRoot),
-        spends: paddedSpends.map(s => BigInt(s)),
-        userIDHash: userIDHash,
-        userIndex: BigInt(userIndex),
-        authPath: authPath.map(x => BigInt(x))
+        userIdHash: userIDHash.toString(),
+        spends: spends.map(s => s.toString()),
+        threshold: thresholdBigInt.toString(),
+        merkleRoot: merkleRoot,
+        spendsHash: calculatedHashStr,
+        pathElements: pathElements,
+        pathIndex: userIndex.toString()  // Only pathIndex, not pathIndices
     };
 
-    console.log("Circuit Inputs:", circuitInputs);
+    console.log("Circuit Inputs:", {
+        userIdHash: circuitInputs.userIdHash,
+        spends: circuitInputs.spends,
+        threshold: circuitInputs.threshold,
+        merkleRoot: circuitInputs.merkleRoot,
+        spendsHash: circuitInputs.spendsHash,
+        pathElementsLength: circuitInputs.pathElements.length,
+        pathElements: circuitInputs.pathElements,
+        pathIndex: circuitInputs.pathIndex
+    });
 
-    const wasmPath = path.join(__dirname, "../../budget_checker_circuit/circuit.wasm");
-    const zkeyPath = path.join(__dirname, "../../budget_checker_circuit/circuit_final.zkey");
-    
-    if (!fs.existsSync(wasmPath)) {
-        throw new Error(`WASM file not found: ${wasmPath}`);
-    }
-    if (!fs.existsSync(zkeyPath)) {
-        throw new Error(`ZKey file not found: ${zkeyPath}`);
-    }
-    
+    const wasmPath = path.join(__dirname, "../../budget_checker_circuit/setup/circuit.wasm");
+    const zkeyPath = path.join(__dirname, "../../budget_checker_circuit/setup/circuit_final.zkey");
     console.log("Using WASM Path:", wasmPath);
     console.log("Using ZKey Path:", zkeyPath);
 
@@ -205,24 +234,26 @@ async function generateBudgetProof(userId, userSpends, budgetThreshold) {
         zkeyPath
     );
 
-    console.log("Budget proof generated successfully.");
+    console.log("Proof generated successfully.");
     console.log("Public Signals:", publicSignals);
     
-    // Don't throw error here - let zkVerify handle the verification
-    // The result will be determined by publicSignals[0]: 1 = under budget, 0 = over budget
-    
-    return { proof, publicSignals };
+    return { 
+        proof, 
+        publicSignals,
+        userId,
+        result: publicSignals[0] // Budget check result
+    };
 }
 
 // If this file is run directly, generate a proof for an example user.
 if (require.main === module) {
     (async () => {
         try {
-            // Example: prove that user "user1" spending is under budget threshold 1000.
+            // Example: prove that user "user1" has spending within budget.
             const userId = "user1";
-            const userSpends = [100, 200, 150, 50, 300];
-            const budgetThreshold = 1000;
-            const { proof, publicSignals } = await generateBudgetProof(userId, userSpends, budgetThreshold);
+            const spends = [202, 204, 245, 279, 122];
+            const threshold = 1000;
+            const { proof, publicSignals } = await generateBudgetProof(userId, spends, threshold);
             console.log("Zero-Knowledge Proof:", JSON.stringify(proof, null, 2));
             console.log("Public Signals:", publicSignals);
         } catch (error) {

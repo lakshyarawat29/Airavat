@@ -13,7 +13,7 @@ async function verifyBudgetWithZkVerify(proof, publicSignals) {
     // Don't check budget result here - verify the proof regardless
     // The budget result is determined by publicSignals[0]: 1 = under budget, 0 = over budget
 
-    const verificationPath = path.join(__dirname, "../../budget_checker_circuit/verification_key.json");
+    const verificationPath = path.join(__dirname, "../../budget_checker_circuit/setup/verification_key.json");
     const vk = JSON.parse(fs.readFileSync(verificationPath, "utf8"));
 
     // Establish zkVerify session
@@ -72,15 +72,18 @@ async function verifyBudgetWithZkVerify(proof, publicSignals) {
       });
 
       events.on(ZkVerifyEvents.Finalized, (eventData) => {
-        console.log('Budget proof transaction finalized:', eventData);
+        console.log('🎉 Budget proof transaction finalized:', eventData);
         
-        // Resolve immediately after finalization - we don't need to wait for aggregation
+        // Resolve with both verification status and the actual result
         if (!isResolved) {
           isResolved = true;
           setTimeout(() => {
             session.close().catch(() => {}); // Close session but don't wait
-            resolve(true);
-          }, 100); // Small delay to allow aggregation to start
+            resolve({
+              verified: true,
+              result: parseInt(publicSignals[0]) // The actual budget check result from the circuit
+            });
+          }, 100);
         }
       });
 
