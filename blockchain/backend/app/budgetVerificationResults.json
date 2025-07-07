@@ -1,5 +1,21 @@
 {
   "verifications": {
-    "verified": []
+    "verified": [
+      {
+        "userId": "user1",
+        "spends": [
+          100,
+          200,
+          150,
+          50,
+          300
+        ],
+        "threshold": 1000,
+        "timestamp": 1751735829143,
+        "result": 1,
+        "totalSpend": 800,
+        "merkleRoot": "6626541625119619144609906014525065467462035727514617660796814048064688369550"
+      }
+    ]
   }
 }
