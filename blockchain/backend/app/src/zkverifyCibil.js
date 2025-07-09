@@ -16,7 +16,7 @@ async function verify(proof, publicSignals) {
       throw new Error("THRESHOLD_NOT_MET: Student score is below required threshold of 1400");
     }
 
-    const verificationPath = path.join(__dirname, "../../circuit/setup/verification_key.json");
+    const verificationPath = path.join(__dirname, "../../cibil_checker_circuit/setup/verification_key.json");
     const vk = JSON.parse(fs.readFileSync(verificationPath, "utf8"));
 
     // Establish zkVerify session

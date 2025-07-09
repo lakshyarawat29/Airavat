@@ -171,8 +171,8 @@ async function generateProof(userId, threshold) {
 
     console.log("Circuit Inputs:", circuitInputs);
 
-    const wasmPath = path.join(__dirname, "../../circuit/setup/circuit.wasm");
-    const zkeyPath = path.join(__dirname, "../../circuit/setup/circuit_final.zkey");
+    const wasmPath = path.join(__dirname, "../../cibil_checker_circuit/setup/circuit.wasm");
+    const zkeyPath = path.join(__dirname, "../../cibil_checker_circuit/setup/circuit_final.zkey");
     console.log("Using WASM Path:", wasmPath);
     console.log("Using ZKey Path:", zkeyPath);
 
