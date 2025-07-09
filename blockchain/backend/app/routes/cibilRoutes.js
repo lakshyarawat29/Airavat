@@ -1,63 +1,61 @@
 const express = require("express");
+const { generateProof } = require("../src/generateCibilProof");
+const { verifyCibilWithZkVerify } = require("../src/zkverifyCibil");
 const fs = require("fs");
 const path = require("path");
-const { generateProof } = require("../src/generateCibilProof");
-const { verify } = require("../src/zkverifyCibil");
-const router = express.Router();
-const CIBIL_THRESHOLD = 700;
-const verificationResultsPath = "../verificationResults.json";
+const snarkjs = require("snarkjs");
 
-// Ensure verificationResults.json exists
-if (!fs.existsSync(verificationResultsPath)) {
-  fs.writeFileSync(
-    verificationResultsPath,
-    JSON.stringify({ verifications: { verified: [] } }, null, 2)
-  );
-}
+const router = express.Router();
 
 router.post("/", async (req, res) => {
-  console.log("Received verification request:", req.body);
-
   try {
-    const { userId } = req.body;
-    if (!userId) throw new Error("Missing required field: userId");
-
-    console.log("Step 1: Generating proof...");
-    const { proof, publicSignals } = await generateProof(userId, CIBIL_THRESHOLD);
-
-    console.log("Step 2: Verifying proof with zkVerify...");
-    const verificationResult = await verify(proof, publicSignals);
-    if (!verificationResult) throw new Error("Proof verification failed");
-
-    // Extract threshold result from publicSignals[0]: 1 = threshold met, 0 = threshold not met
-    const thresholdResult = parseInt(publicSignals[0]);
+    const { userId, threshold } = req.body;
     
-    console.log(`✅ Verification completed! CIBIL threshold result: ${thresholdResult}`);
+    // Validate inputs
+    if (!userId || !threshold) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields: userId and threshold"
+      });
+    }
     
-    // Save verification result
-    const results = JSON.parse(fs.readFileSync(verificationResultsPath));
-    results.verifications.verified.push({
-      userId,
-      timestamp: Date.now(),
-      result: thresholdResult,
-      verificationHash: publicSignals[1] || "N/A",
-    });
-    fs.writeFileSync(verificationResultsPath, JSON.stringify(results, null, 2));
+    // Validate threshold is a number
+    const thresholdNum = parseInt(threshold);
+    if (isNaN(thresholdNum) || thresholdNum <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Threshold must be a positive number"
+      });
+    }
+    
+    console.log(`\n🔍 Processing CIBIL verification for ${userId} with threshold ${thresholdNum}`);
+    
+    // Generate proof
+    const proofResult = await generateProof(userId, thresholdNum);
+    
+    console.log("🔗 Verifying CIBIL proof with zkVerify on-chain...");
+    
+    // Use zkVerify for on-chain verification
+    const zkVerifyResult = await verifyCibilWithZkVerify(
+      proofResult.proof,
+      proofResult.publicSignals
+    );
 
-    // Return the threshold result (1 = CIBIL >= 700, 0 = CIBIL < 700)
-    res.json({ 
-      success: true, 
-      result: thresholdResult,
-      userId: userId,
-      timestamp: new Date().toISOString()
-    });
+    console.log("🎉 zkVerify on-chain verification result:", zkVerifyResult);
+
+    // Return the on-chain verification result directly
+    if (zkVerifyResult.verified) {
+      // zkVerify confirmed the proof is valid on-chain
+      // The actual CIBIL check result is in the public signals
+      res.send(zkVerifyResult.result.toString());
+    } else {
+      // zkVerify failed - proof is invalid
+      res.send("0");
+    }
+    
   } catch (error) {
-    console.error("Verification failed:", error);
-    res.status(400).json({ 
-      success: false, 
-      result: 0,
-      error: error.message 
-    });
+    console.error("❌ CIBIL verification error:", error.message);
+    res.send("0");
   }
 });
 

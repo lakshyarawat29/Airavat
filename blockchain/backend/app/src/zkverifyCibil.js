@@ -8,7 +8,7 @@ const { zkVerifySession, ZkVerifyEvents, Library, CurveType } = require("zkverif
 require("dotenv").config({ path: ".env" });
 require("dotenv").config({ path: ".env.secrets" });
 
-async function verify(proof, publicSignals) {
+async function verifyCibilWithZkVerify(proof, publicSignals) {
   const ZKV_SEED_PHRASE = "winner stamp fabric because gallery embody oyster achieve resemble bullet business fee";
 
   try {
@@ -77,13 +77,15 @@ async function verify(proof, publicSignals) {
       events.on(ZkVerifyEvents.Finalized, (eventData) => {
         console.log('Transaction finalized:', eventData);
         
-        // Resolve immediately after finalization - we don't need to wait for aggregation
         if (!isResolved) {
           isResolved = true;
           setTimeout(() => {
-            session.close().catch(() => {}); // Close session but don't wait
-            resolve(true);
-          }, 100); // Small delay to allow aggregation to start
+            session.close().catch(() => {});
+            resolve({
+              verified: true,
+              result: parseInt(publicSignals[0]) // Return actual circuit result
+            });
+          }, 100);
         }
       });
 
@@ -116,4 +118,4 @@ async function verify(proof, publicSignals) {
   }
 }
 
-module.exports = { verify };
+module.exports = { verifyCibilWithZkVerify };

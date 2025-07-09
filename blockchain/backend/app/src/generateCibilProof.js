@@ -91,19 +91,6 @@ async function merkleTree(input, leafHash, nodeHash) {
 }
 
 /**
- * Hash a user's identifier using SHA-256 and convert to BigInt.
- * @param {string} id - The user identifier.
- * @returns {BigInt} The hash as a BigInt.
- */
-function getUserIDHash(id) {
-    if (!id) {
-        throw new Error("Invalid user id passed to getUserIDHash: " + id);
-    }
-    const hashHex = crypto.createHash("sha256").update(id).digest("hex");
-    return BigInt("0x" + hashHex);
-}
-
-/**
  * Generate the Merkle tree for user records.
  * Each leaf is computed as: Poseidon( userIDHash, cibilScore )
  */
@@ -113,7 +100,9 @@ async function generateUserMerkleTree() {
     // Leaf hash function: combine userIDHash and CIBIL score.
     const hashUserLeaf = (user) => {
         const userCIBILScore = BigInt(user.cibilScore);
-        return poseidon([getUserIDHash(user.id), userCIBILScore]);
+        // Use userIDHash from data instead of computing from ID
+        const userIDHash = BigInt(user.userIDHash);
+        return poseidon([userIDHash, userCIBILScore]);
     };
 
     const hashInternalNode = (left, right) => poseidon([left, right]);
@@ -149,10 +138,14 @@ async function generateProof(userId, threshold) {
     }
     const userRecord = users[userIndex];
 
+    console.log(`🔍 Generating proof for ${userId} with threshold ${threshold}`);
+    console.log(`📊 User's CIBIL score: ${userRecord.cibilScore}`);
+
     const { merkleTreeInstance, poseidon } = await generateUserMerkleTree();
     const merkleRoot = poseidon.F.toString(merkleTreeInstance.getRoot());
 
-    const userIDHash = getUserIDHash(userRecord.id);
+    // Use userIDHash from data instead of computing from ID
+    const userIDHash = BigInt(userRecord.userIDHash);
     const userCIBILScore = BigInt(userRecord.cibilScore);
     const thresholdBigInt = BigInt(threshold);
 
@@ -169,7 +162,14 @@ async function generateProof(userId, threshold) {
         userCIBILScore: userCIBILScore
     };
 
-    console.log("Circuit Inputs:", circuitInputs);
+    console.log("Circuit Inputs:", {
+        merkleRoot: circuitInputs.merkleRoot.toString(),
+        threshold: circuitInputs.threshold.toString(),
+        userIndex: circuitInputs.userIndex.toString(),
+        userIDHash: circuitInputs.userIDHash.toString(),
+        userCIBILScore: circuitInputs.userCIBILScore.toString(),
+        authPathLength: circuitInputs.authPath.length
+    });
 
     const wasmPath = path.join(__dirname, "../../cibil_checker_circuit/setup/circuit.wasm");
     const zkeyPath = path.join(__dirname, "../../cibil_checker_circuit/setup/circuit_final.zkey");
@@ -186,14 +186,13 @@ async function generateProof(userId, threshold) {
     console.log("Proof generated successfully.");
     console.log("Public Signals:", publicSignals);
     
-    if (publicSignals[1] === "0") {
-        throw {
-          type: 'THRESHOLD_NOT_MET',
-          message: `CIBIL score is below required threshold (${threshold})`
-        };
-    }
-    
-    return { proof, publicSignals };
+    return { 
+        proof, 
+        publicSignals,
+        userId,
+        threshold,
+        result: publicSignals[0] // The verification result
+    };
 }
 
 // If this file is run directly, generate a proof for an example user.
