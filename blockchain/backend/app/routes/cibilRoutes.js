@@ -1,8 +1,8 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-const { generateProof } = require("../src/generateProof");
-const { verify } = require("../src/zkverify");
+const { generateProof } = require("../src/generateCibilProof");
+const { verify } = require("../src/zkverifyCibil");
 const router = express.Router();
 const CIBIL_THRESHOLD = 700;
 const verificationResultsPath = "../verificationResults.json";

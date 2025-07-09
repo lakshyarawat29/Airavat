@@ -1,5 +1,12 @@
 {
   "verifications": {
-    "verified": []
+    "verified": [
+      {
+        "userId": "user1",
+        "timestamp": 1752055841445,
+        "result": 1,
+        "verificationHash": "11521243457696682706046175786838759013455327695077507856533745763241668708059"
+      }
+    ]
   }
 }

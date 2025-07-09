@@ -1,21 +1,14 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cors = require("cors");
 
-const verifyCibilRoutes = require("../routes/verifyRoutes");
+const verifyCibilRoutes = require("../routes/cibilRoutes");
 const budgetRoutes = require("../routes/budgetRoutes");
-const fraudRoutes = require("../routes/fraudRoutes"); // New line for fraud routes
+const fraudRoutes = require("../routes/fraudRoutes"); 
 const app = express();
 const PORT = 4000;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cors({
-  origin: ["http://localhost:3000", "https://zk-cibil.vercel.app"],
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
-}));
 
 // Health check endpoint
 app.get("/", (req, res) => {
