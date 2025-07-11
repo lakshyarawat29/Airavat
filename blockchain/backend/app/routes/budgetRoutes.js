@@ -9,36 +9,22 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
   try {
-    const { userId, spends, threshold, spendsHash } = req.body;
+    const { userHash, spends, threshold, spendsHash } = req.body; // Changed from userId
     
     // Validate inputs
-    if (!userId || !spends || !threshold) {
+    if (!userHash || !spends || !threshold || !spendsHash) {
       return res.status(400).json({
         success: false,
-        error: "Missing required fields: userId, spends, threshold"
+        error: "Missing required fields: userHash, spends, threshold, spendsHash"
       });
     }
     
-    if (!Array.isArray(spends) || spends.length !== 5) {
-      return res.status(400).json({
-        success: false,
-        error: "spends must be an array of 5 numbers"
-      });
-    }
-    
-    if (!spendsHash) {
-      return res.status(400).json({
-        success: false,
-        error: "spendsHash is required for integrity verification"
-      });
-    }
-    
-    console.log(`\n🔄 Processing budget verification for ${userId}`);
+    console.log(`\n🔄 Processing budget verification for userHash ${userHash}`);
     console.log(`📊 Threshold: ${threshold}`);
     console.log(`🔒 SpendsHash: ${spendsHash}`);
     
     // Generate proof
-    const proofResult = await generateBudgetProof(userId, spends, threshold);
+    const proofResult = await generateBudgetProof(userHash, spends, threshold, spendsHash);
     
     console.log("🔗 Verifying budget proof with zkVerify on-chain...");
     

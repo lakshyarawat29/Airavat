@@ -9,20 +9,20 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { userHash } = req.body; // Changed from userId
     
     // Validate inputs
-    if (!userId) {
+    if (!userHash) {
       return res.status(400).json({
         success: false,
-        error: "Missing required field: userId"
+        error: "Missing required field: userHash"
       });
     }
     
-    console.log(`\n🔍 Processing fraud verification for ${userId}`);
+    console.log(`\n🔍 Processing fraud verification for userHash ${userHash}`);
     
     // Generate proof
-    const proofResult = await generateFraudProof(userId);
+    const proofResult = await generateFraudProof(userHash);
     
     console.log("🔗 Verifying fraud proof with zkVerify on-chain...");
     

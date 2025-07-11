@@ -1,5 +1,5 @@
 const express = require("express");
-const { generateProof } = require("../src/generateCibilProof");
+const { generateProofByHash } = require("../src/generateCibilProof");
 const { verifyCibilWithZkVerify } = require("../src/zkverifyCibil");
 const fs = require("fs");
 const path = require("path");
@@ -9,13 +9,13 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
   try {
-    const { userId, threshold } = req.body;
+    const { userHash, threshold } = req.body; // Changed from userId to userHash
     
     // Validate inputs
-    if (!userId || !threshold) {
+    if (!userHash || !threshold) {
       return res.status(400).json({
         success: false,
-        error: "Missing required fields: userId and threshold"
+        error: "Missing required fields: userHash and threshold"
       });
     }
     
@@ -28,10 +28,10 @@ router.post("/", async (req, res) => {
       });
     }
     
-    console.log(`\n🔍 Processing CIBIL verification for ${userId} with threshold ${thresholdNum}`);
+    console.log(`\n🔍 Processing CIBIL verification for userHash ${userHash} with threshold ${thresholdNum}`);
     
-    // Generate proof
-    const proofResult = await generateProof(userId, thresholdNum);
+    // Generate proof using hash directly
+    const proofResult = await generateProofByHash(userHash, thresholdNum);
     
     console.log("🔗 Verifying CIBIL proof with zkVerify on-chain...");
     

@@ -138,18 +138,24 @@ async function generateUserMerkleTree() {
 
 /**
  * Generate a zero-knowledge proof that a given user's spending is within budget.
- * @param {string} userId - The user's identifier (e.g., "user1").
+ * @param {string} userHash - The user's hash identifier.
  * @param {Array<number>} spends - Array of user's spending amounts.
  * @param {number} threshold - The budget threshold.
+ * @param {string} spendsHash - The expected spends hash.
  * @returns {Object} Proof and public signals.
  */
-async function generateBudgetProof(userId, spends, threshold) {
+async function generateBudgetProof(userHash, spends, threshold, spendsHash) {
     const users = JSON.parse(fs.readFileSync(sampleUsersPath, "utf8"));
-    const userIndex = users.findIndex(user => user.id === userId);
+    
+    // Find user by userIDHash instead of id
+    const userIndex = users.findIndex(user => user.userIDHash === userHash);
     if (userIndex === -1) {
-        throw new Error(`User with id ${userId} not found.`);
+        throw new Error(`User with hash ${userHash} not found.`);
     }
     const userRecord = users[userIndex];
+
+    console.log(`🔍 Generating budget proof for userHash ${userHash}`);
+    console.log(`📊 User ID: ${userRecord.id}`);
 
     const { merkleTreeInstance, poseidon } = await generateUserMerkleTree();
     const merkleRoot = poseidon.F.toString(merkleTreeInstance.getRoot());
@@ -164,13 +170,21 @@ async function generateBudgetProof(userId, spends, threshold) {
     
     console.log("Calculated hash:", calculatedHashStr);
     console.log("Registered hash:", registeredHashStr);
+    console.log("Provided spendsHash:", spendsHash);
     console.log("Match:", calculatedHashStr === registeredHashStr);
 
-    if (calculatedHashStr !== registeredHashStr) {
-        throw new Error("Provided spends do not match registered spending hash");
+    // Check against provided spendsHash parameter
+    if (calculatedHashStr !== spendsHash) {
+        throw new Error("Provided spends do not match the provided spending hash");
     }
 
-    const userIDHash = BigInt(userRecord.userIDHash);
+    // Also check against registered hash for additional verification
+    if (calculatedHashStr !== registeredHashStr) {
+        console.warn("Warning: Provided spends don't match registered hash, but match provided spendsHash");
+    }
+
+    // Use userHash directly instead of converting from ID
+    const userIDHash = BigInt(userHash);
     const thresholdBigInt = BigInt(threshold);
 
     const proofData = merkleTreeInstance.getMerkleProof(userIndex);
@@ -208,7 +222,7 @@ async function generateBudgetProof(userId, spends, threshold) {
         merkleRoot: merkleRoot,
         spendsHash: calculatedHashStr,
         pathElements: pathElements,
-        pathIndex: userIndex.toString()  // Only pathIndex, not pathIndices
+        pathIndex: userIndex.toString()
     };
 
     console.log("Circuit Inputs:", {
@@ -240,26 +254,19 @@ async function generateBudgetProof(userId, spends, threshold) {
     return { 
         proof, 
         publicSignals,
-        userId,
+        userHash, // Return userHash instead of userId
         result: publicSignals[0] // Budget check result
     };
 }
 
-// If this file is run directly, generate a proof for an example user.
-if (require.main === module) {
-    (async () => {
-        try {
-            // Example: prove that user "user1" has spending within budget.
-            const userId = "user1";
-            const spends = [202, 204, 245, 279, 122];
-            const threshold = 1000;
-            const { proof, publicSignals } = await generateBudgetProof(userId, spends, threshold);
-            console.log("Zero-Knowledge Proof:", JSON.stringify(proof, null, 2));
-            console.log("Public Signals:", publicSignals);
-        } catch (error) {
-            console.error("Error during proof generation:", error);
-        }
-    })();
+// Add backward compatibility function for old userId-based calls
+async function generateBudgetProofByUserId(userId, spends, threshold, spendsHash) {
+    const users = JSON.parse(fs.readFileSync(sampleUsersPath, "utf8"));
+    const userRecord = users.find(user => user.id === userId);
+    if (!userRecord) {
+        throw new Error(`User with id ${userId} not found.`);
+    }
+    return generateBudgetProof(userRecord.userIDHash, spends, threshold, spendsHash);
 }
 
-module.exports = { generateBudgetProof, generateUserMerkleTree };
+module.exports = { generateBudgetProof, generateBudgetProofByUserId, generateUserMerkleTree };

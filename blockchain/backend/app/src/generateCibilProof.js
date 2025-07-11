@@ -132,27 +132,38 @@ async function generateUserMerkleTree() {
  * @returns {Object} Proof and public signals.
  */
 async function generateProof(userId, threshold) {
-    const userIndex = users.findIndex(user => user.id === userId);
-    if (userIndex === -1) {
+    const userRecord = users.find(user => user.id === userId);
+    if (!userRecord) {
         throw new Error(`User with id ${userId} not found.`);
+    }
+    return generateProofByHash(userRecord.userIDHash, threshold);
+}
+
+/**
+ * Generate proof using userHash directly (more efficient)
+ */
+async function generateProofByHash(userHash, threshold) {
+    // Find user by hash instead of ID
+    const userIndex = users.findIndex(user => user.userIDHash === userHash);
+    if (userIndex === -1) {
+        throw new Error(`User with hash ${userHash} not found.`);
     }
     const userRecord = users[userIndex];
 
-    console.log(`🔍 Generating proof for ${userId} with threshold ${threshold}`);
+    console.log(`🔍 Generating proof for userHash ${userHash} with threshold ${threshold}`);
     console.log(`📊 User's CIBIL score: ${userRecord.cibilScore}`);
 
     const { merkleTreeInstance, poseidon } = await generateUserMerkleTree();
     const merkleRoot = poseidon.F.toString(merkleTreeInstance.getRoot());
 
-    // Use userIDHash from data instead of computing from ID
-    const userIDHash = BigInt(userRecord.userIDHash);
+    // Use userHash directly - no conversion needed!
+    const userIDHash = BigInt(userHash);
     const userCIBILScore = BigInt(userRecord.cibilScore);
     const thresholdBigInt = BigInt(threshold);
 
     const proofData = merkleTreeInstance.getMerkleProof(userIndex);
     const authPath = proofData.lemma.map(x => poseidon.F.toString(x));
 
-    // Circuit inputs for CIBIL score verification
     const circuitInputs = {
         merkleRoot: BigInt(merkleRoot),
         threshold: thresholdBigInt,
@@ -189,9 +200,9 @@ async function generateProof(userId, threshold) {
     return { 
         proof, 
         publicSignals,
-        userId,
+        userHash,
         threshold,
-        result: publicSignals[0] // The verification result
+        result: publicSignals[0]
     };
 }
 
@@ -211,4 +222,4 @@ if (require.main === module) {
     })();
 }
 
-module.exports = { generateProof, generateUserMerkleTree };
+module.exports = { generateProof, generateProofByHash, generateUserMerkleTree };

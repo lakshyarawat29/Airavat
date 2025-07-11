@@ -2,12 +2,13 @@ const circomlibjs = require("circomlibjs");
 const snarkjs = require("snarkjs");
 const fs = require("fs");
 const path = require("path");
-const crypto = require("crypto");
 
-function getUserHash(id, poseidon) {
-    // Hash the identifier with SHA256, then Poseidon
-    const hashHex = crypto.createHash("sha256").update(id).digest("hex");
-    const hashBigInt = BigInt("0x" + hashHex);
+// Import users with precomputed hashes
+const { users } = require(`../userRecords.json`);
+
+function getUserHash(userIDHash, poseidon) {
+    // Convert precomputed hash to Poseidon hash for circuit
+    const hashBigInt = BigInt(userIDHash);
     return poseidon([hashBigInt]);
 }
 
@@ -16,33 +17,38 @@ async function generateBlacklistMerkleTree() {
     const depth = 10;
     const leafCount = 2 ** depth;
 
-    // Load fraud users from file or create default blacklist
+    // Load fraud users from file
     let fraudUsers = [];
     const fraudUsersPath = path.join(__dirname, "../fraudUsers.json");
     
     if (fs.existsSync(fraudUsersPath)) {
-        fraudUsers = JSON.parse(fs.readFileSync(fraudUsersPath, "utf8"));
-    } else {
-        // Create default blacklist
-        for (let i = 1; i <= 50; i++) {
-            fraudUsers.push(`BLACKLISTED_USER_${i}`);
-        }
-        // Make sure FRAUDSTER_001 is included
-        if (!fraudUsers.includes("FRAUDSTER_001")) {
-            fraudUsers[3] = "FRAUDSTER_001"; // Replace 4th element
-        }
+        const rawFraudUsers = JSON.parse(fs.readFileSync(fraudUsersPath, "utf8"));
+        
+        // Convert to objects with precomputed hashes if needed
+        fraudUsers = rawFraudUsers.map(item => {
+            if (typeof item === 'string') {
+                // Find corresponding user in userRecords by ID
+                const userRecord = users.find(user => user.id === item);
+                return {
+                    id: item,
+                    userIDHash: userRecord ? userRecord.userIDHash : "0"
+                };
+            }
+            return item; // Already an object
+        });
     }
 
     console.log(`📋 Loaded ${fraudUsers.length} blacklisted users`);
-    console.log(`🎯 First 5 blacklisted users:`, fraudUsers.slice(0, 5));
+    console.log(`🎯 First 3 blacklisted users:`, fraudUsers.slice(0, 3).map(u => u.id));
 
-    // Hash all blacklisted users - IMPORTANT: Keep order!
+    // Hash all blacklisted users using their precomputed hashes
     const blacklistHashes = [];
     for (let i = 0; i < fraudUsers.length; i++) {
-        blacklistHashes.push(getUserHash(fraudUsers[i], poseidon));
+        const userIDHash = fraudUsers[i].userIDHash;
+        blacklistHashes.push(getUserHash(userIDHash, poseidon));
     }
 
-    // Pad to full tree with zeros or last element
+    // Pad to full tree
     const paddingHash = poseidon([BigInt(0)]);
     while (blacklistHashes.length < leafCount) {
         blacklistHashes.push(paddingHash);
@@ -87,28 +93,29 @@ function getMerkleProof(merkleTree, index, depth) {
 
 /**
  * Generate a zero-knowledge proof that a user is NOT in the blacklist
- * @param {string} userId - The user's identifier
+ * @param {string} userHash - The user's precomputed hash identifier
  * @returns {Object} Proof and public signals
  */
-async function generateFraudProof(userId) {
+async function generateFraudProof(userHash) {
     const { merkleTree, merkleRoot, poseidon, fraudUsers } = await generateBlacklistMerkleTree();
     
-    // Hash the user ID
-    const userHash = getUserHash(userId, poseidon);
+    console.log(`🔍 Processing userHash: ${userHash}`);
     
-    console.log(`🔍 Checking user: ${userId}`);
-    console.log(`🔐 User hash: ${poseidon.F.toString(userHash)}`);
+    // Check if the provided userHash is in the blacklisted hashes
+    const isActuallyBlacklisted = fraudUsers.some(user => user.userIDHash === userHash);
+    console.log(`📊 User hash ${userHash} actually blacklisted: ${isActuallyBlacklisted}`);
     
-    // Check if user is actually blacklisted
-    const isActuallyBlacklisted = fraudUsers.includes(userId);
-    console.log(`📊 User actually blacklisted: ${isActuallyBlacklisted}`);
+    // Convert userHash to circuit input format
+    const circuitUserHash = getUserHash(userHash, poseidon);
     
     let pathElements, pathIndices;
     
     if (isActuallyBlacklisted) {
-        // User IS blacklisted - find their actual position in the tree
-        const blacklistedIndex = fraudUsers.indexOf(userId);
-        console.log(`🎯 Found blacklisted user at index: ${blacklistedIndex}`);
+        // User IS blacklisted - find their position in the fraudUsers array
+        const blacklistedIndex = fraudUsers.findIndex(user => user.userIDHash === userHash);
+        const blacklistedUser = fraudUsers[blacklistedIndex];
+        console.log(`🎯 Found blacklisted user ${blacklistedUser.id} at index: ${blacklistedIndex}`);
+        
         const merkleProof = getMerkleProof(merkleTree, blacklistedIndex, 10);
         pathElements = merkleProof.pathElements;
         pathIndices = merkleProof.pathIndices;
@@ -124,7 +131,7 @@ async function generateFraudProof(userId) {
     // Circuit inputs
     const circuitInputs = {
         blacklistRoot: poseidon.F.toString(merkleRoot),
-        userHash: poseidon.F.toString(userHash),
+        userHash: poseidon.F.toString(circuitUserHash),
         pathElements: pathElements.map(x => poseidon.F.toString(x)),
         pathIndices: pathIndices
     };
@@ -139,9 +146,6 @@ async function generateFraudProof(userId) {
 
     const wasmPath = path.join(__dirname, "../../fraud_checker_circuit/setup/circuit.wasm");
     const zkeyPath = path.join(__dirname, "../../fraud_checker_circuit/setup/circuit_final.zkey");
-    
-    console.log("Using WASM Path:", wasmPath);
-    console.log("Using ZKey Path:", zkeyPath);
 
     // Generate the proof using snarkjs
     const { proof, publicSignals } = await snarkjs.groth16.fullProve(
@@ -157,8 +161,8 @@ async function generateFraudProof(userId) {
     return { 
         proof, 
         publicSignals,
-        userId,
-        result: publicSignals[0] // Fraud check result: 1 = clean, 0 = blacklisted
+        userHash,
+        result: publicSignals[0]
     };
 }
 
