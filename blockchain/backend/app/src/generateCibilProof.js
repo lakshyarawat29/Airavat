@@ -100,8 +100,8 @@ async function generateUserMerkleTree() {
     // Leaf hash function: combine userIDHash and CIBIL score.
     const hashUserLeaf = (user) => {
         const userCIBILScore = BigInt(user.cibilScore);
-        // Use userIDHash from data instead of computing from ID
-        const userIDHash = BigInt(user.userIDHash);
+        // Convert hex SHA-256 hash to BigInt
+        const userIDHash = BigInt("0x" + user.userIDHash);
         return poseidon([userIDHash, userCIBILScore]);
     };
 
@@ -156,8 +156,8 @@ async function generateProofByHash(userHash, threshold) {
     const { merkleTreeInstance, poseidon } = await generateUserMerkleTree();
     const merkleRoot = poseidon.F.toString(merkleTreeInstance.getRoot());
 
-    // Use userHash directly - no conversion needed!
-    const userIDHash = BigInt(userHash);
+    // Convert hex SHA-256 hash to BigInt
+    const userIDHash = BigInt("0x" + userHash);
     const userCIBILScore = BigInt(userRecord.cibilScore);
     const thresholdBigInt = BigInt(threshold);
 

@@ -7,8 +7,8 @@ const path = require("path");
 const { users } = require(`../userRecords.json`);
 
 function getUserHash(userIDHash, poseidon) {
-    // Convert precomputed hash to Poseidon hash for circuit
-    const hashBigInt = BigInt(userIDHash);
+    // Convert hex SHA-256 hash to Poseidon hash for circuit
+    const hashBigInt = BigInt("0x" + userIDHash);
     return poseidon([hashBigInt]);
 }
 
@@ -24,7 +24,7 @@ async function generateBlacklistMerkleTree() {
     if (fs.existsSync(fraudUsersPath)) {
         const rawFraudUsers = JSON.parse(fs.readFileSync(fraudUsersPath, "utf8"));
         
-        // Convert to objects with precomputed hashes if needed
+        // Convert to objects with SHA-256 hashes if needed
         fraudUsers = rawFraudUsers.map(item => {
             if (typeof item === 'string') {
                 // Find corresponding user in userRecords by ID
@@ -41,7 +41,7 @@ async function generateBlacklistMerkleTree() {
     console.log(`📋 Loaded ${fraudUsers.length} blacklisted users`);
     console.log(`🎯 First 3 blacklisted users:`, fraudUsers.slice(0, 3).map(u => u.id));
 
-    // Hash all blacklisted users using their precomputed hashes
+    // Hash all blacklisted users using their SHA-256 hashes
     const blacklistHashes = [];
     for (let i = 0; i < fraudUsers.length; i++) {
         const userIDHash = fraudUsers[i].userIDHash;
@@ -93,7 +93,7 @@ function getMerkleProof(merkleTree, index, depth) {
 
 /**
  * Generate a zero-knowledge proof that a user is NOT in the blacklist
- * @param {string} userHash - The user's precomputed hash identifier
+ * @param {string} userHash - The user's SHA-256 hash identifier
  * @returns {Object} Proof and public signals
  */
 async function generateFraudProof(userHash) {

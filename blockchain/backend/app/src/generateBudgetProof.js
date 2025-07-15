@@ -111,7 +111,7 @@ async function generateUserMerkleTree() {
 
     // Leaf hash function: combine userIDHash and spendsHash.
     const hashUserLeaf = (user) => {
-        const userIDHash = BigInt(user.userIDHash);
+        const userIDHash = BigInt("0x" + user.userIDHash);
         const spendsHash = BigInt(user.spendsHash);
         return poseidon([userIDHash, spendsHash]);
     };
@@ -183,8 +183,8 @@ async function generateBudgetProof(userHash, spends, threshold, spendsHash) {
         console.warn("Warning: Provided spends don't match registered hash, but match provided spendsHash");
     }
 
-    // Use userHash directly instead of converting from ID
-    const userIDHash = BigInt(userHash);
+    // Convert hex SHA-256 hash to BigInt
+    const userIDHash = BigInt("0x" + userHash);
     const thresholdBigInt = BigInt(threshold);
 
     const proofData = merkleTreeInstance.getMerkleProof(userIndex);
