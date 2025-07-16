@@ -5,7 +5,10 @@ pragma solidity ^0.8.20;
 contract Ownable {
     address public owner;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 
     constructor() {
         owner = msg.sender;
@@ -18,14 +21,27 @@ contract Ownable {
     }
 
     function transferOwnership(address newOwner) external onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        require(
+            newOwner != address(0),
+            "Ownable: new owner is the zero address"
+        );
         emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
 }
 
 contract AiravatLogger is Ownable {
-    enum AgentRole { None, VRA, RBA, TMA, DRA, ZKBA, BBA, OCA, TLSA }
+    enum AgentRole {
+        None,
+        VRA,
+        RBA,
+        TMA,
+        DRA,
+        ZKBA,
+        BBA,
+        OCA,
+        TLSA
+    }
 
     struct LogEntry {
         address agent;
@@ -55,7 +71,10 @@ contract AiravatLogger is Ownable {
 
     // --- MODIFIERS ---
     modifier onlyAssignedAgent() {
-        require(agentRoles[msg.sender] != AgentRole.None, "Not an assigned agent");
+        require(
+            agentRoles[msg.sender] != AgentRole.None,
+            "Not an assigned agent"
+        );
         _;
     }
 

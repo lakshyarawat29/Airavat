@@ -3,10 +3,12 @@ const express = require('express');
 const { ethers } = require('ethers');
 const AiravatLoggerJson = require('../artifacts/AiravatLogger.sol/AiravatLogger.json');
 const app = express();
-const cors = require('cors')
-app.use(cors({
-  origin: 'http://localhost:5173'
-}));
+const cors = require('cors');
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+  })
+);
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
@@ -60,7 +62,6 @@ app.get('/logs/:index', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-
 
 // GET /logs/count - get total number of logs
 app.get('/logs/count', async (req, res) => {

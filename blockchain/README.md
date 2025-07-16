@@ -117,3 +117,104 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+##Airavat Logging Middleware Documentation
+📡 Overview
+This middleware connects Airavat Agents to the deployed Ethereum smart contract AiravatLogger. It allows agents to securely log events and retrieve logs via a RESTful API.
+
+🔗 Smart Contract
+Name: AiravatLogger
+
+Deployed On: Sepolia Testnet
+
+Contract Address: 0x05F7eF489B4ff8cd72F50a9AA07d9537131ba16c
+
+ABI: Available in artifacts/AiravatLogger.sol/AiravatLogger.json
+
+Owner Address: 0x4D02E03F112d0336f412F4590a35d79AA17C9047
+
+🔌 API Endpoints
+POST /log
+Logs a new event to the blockchain.
+
+Request Body:
+
+json
+Copy
+Edit
+{
+"requestId": "REQ123",
+"agent": "AgentBBA",
+"timestamp": 1721209200,
+"status": "SAFE",
+"riskScore": 2
+}
+Response:
+
+json
+Copy
+Edit
+{
+"success": true,
+"txHash": "0x..."
+}
+GET /logs
+Fetch all logs.
+
+Response:
+
+json
+Copy
+Edit
+[
+{
+"agent": "0x...",
+"role": 6,
+"requestId": "0x...",
+"riskScore": 2,
+"status": "SAFE",
+"timestamp": 1721209200
+}
+]
+GET /logs/count
+Returns the total number of stored logs.
+
+Response:
+
+json
+Copy
+Edit
+{
+"success": true,
+"count": 3
+}
+GET /logs/:index
+Returns a single log by its array index.
+
+Example: /logs/0
+
+Response:
+
+json
+Copy
+Edit
+{
+"agent": "0x...",
+"role": 6,
+"requestId": "0x...",
+"riskScore": 2,
+"status": "SAFE",
+"timestamp": 1721209200
+}
+🧪 Sample Test Flow
+Agent gets assigned on-chain using assignAgent(address, role).
+
+Backend fetches credentials and contract ABI from .env and artifacts/.
+
+Agent submits a POST /log request from the React frontend or Postman.
+
+Log is recorded on-chain and retrievable via GET /logs.
+
+🚀 Demo
+🔗 Frontend on Vercel: https://airavat-logger.vercel.app
+⚙️ Backend on Localhost (suggested deploy to Render): http://localhost:3000
