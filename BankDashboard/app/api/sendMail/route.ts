@@ -22,11 +22,19 @@ const createTransporter = () => {
 }
 
 export async function POST(request: NextRequest) {
+  console.log('=== SENDMAIL API CALLED ===')
+  console.log('Environment check:', {
+    SMTP_USER: process.env.SMTP_USER ? 'SET' : 'NOT SET',
+    SMTP_PASS: process.env.SMTP_PASS ? 'SET' : 'NOT SET'
+  })
+  
   try {
     const { tokenId, to, subject, messageBody } = await request.json()
+    console.log('Request data:', { tokenId, to, subject: subject || 'default', messageBodyLength: messageBody?.length })
 
     // Validate input
     if (!tokenId || !to || !messageBody) {
+      console.log('Validation failed: missing required fields')
       return NextResponse.json(
         { error: 'Token ID, recipient email, and message body are required' },
         { status: 400 }
@@ -44,15 +52,18 @@ export async function POST(request: NextRequest) {
 
     // Check if SMTP credentials are configured
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.log('SMTP credentials missing!')
       return NextResponse.json(
         { error: 'SMTP credentials not configured. Please set SMTP_USER and SMTP_PASS environment variables.' },
         { status: 500 }
       )
     }
 
+    console.log('Creating transporter...')
     // Create transporter
     const transporter = createTransporter()
 
+    console.log('Preparing email...', { from: process.env.SMTP_USER, to })
     // Email content
     const mailOptions = {
       from: process.env.SMTP_USER,
@@ -88,8 +99,10 @@ Timestamp: ${new Date().toISOString()}
       `
     }
 
+    console.log('Attempting to send email...')
     // Send email
     const info = await transporter.sendMail(mailOptions)
+    console.log('Email sent successfully:', info.messageId)
 
     return NextResponse.json({
       success: true,
@@ -100,7 +113,10 @@ Timestamp: ${new Date().toISOString()}
     })
 
   } catch (error) {
-    console.error('Email sending error:', error)
+    console.error('=== EMAIL SENDING ERROR ===')
+    console.error('Error type:', error?.constructor?.name)
+    console.error('Error message:', (error as any)?.message)
+    console.error('Full error:', error)
     
     // Handle specific nodemailer errors
     if (error instanceof Error) {
