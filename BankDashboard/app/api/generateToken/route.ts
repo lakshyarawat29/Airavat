@@ -45,15 +45,17 @@ export async function POST(request: NextRequest) {
       const webhookResult = await webhookResponse.json()
       console.log('Webhook response:', webhookResult)
 
-      // Generate a local token for the UI flow
-      const timestamp = Date.now()
-      const randomBytes = crypto.randomBytes(16).toString('hex')
-      const tokenId = `TLS-${timestamp}-${randomBytes.substring(0, 8).toUpperCase()}`
+      // Use the token from the webhook response
+      const tokenId = webhookResult.tokenId || webhookResult.token || webhookResult.id
+      
+      if (!tokenId) {
+        throw new Error('No token received from webhook')
+      }
 
       return NextResponse.json({
         success: true,
         tokenId,
-        message: 'Token generated successfully and data sent to webhook',
+        message: 'Token received from webhook successfully',
         webhookResponse: webhookResult,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
       })
@@ -61,18 +63,11 @@ export async function POST(request: NextRequest) {
     } catch (webhookError) {
       console.error('Webhook error:', webhookError)
       
-      // Still generate a token even if webhook fails
-      const timestamp = Date.now()
-      const randomBytes = crypto.randomBytes(16).toString('hex')
-      const tokenId = `TLS-${timestamp}-${randomBytes.substring(0, 8).toUpperCase()}`
-
       return NextResponse.json({
-        success: true,
-        tokenId,
-        message: 'Token generated successfully (webhook failed)',
+        success: false,
+        error: 'Failed to get token from webhook',
         webhookError: (webhookError as Error).message,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      })
+      }, { status: 500 })
     }
 
   } catch (error) {
