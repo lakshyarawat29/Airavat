@@ -38,17 +38,21 @@ export async function POST(request: NextRequest) {
         body: formData,
       })
 
+      console.log('Webhook response status:', webhookResponse.status)
+      console.log('Webhook response headers:', Object.fromEntries(webhookResponse.headers.entries()))
+
       if (!webhookResponse.ok) {
         throw new Error(`Webhook failed: ${webhookResponse.status} ${webhookResponse.statusText}`)
       }
 
       const webhookResult = await webhookResponse.json()
-      console.log('Webhook response:', webhookResult)
+      console.log('Webhook response body:', webhookResult)
 
       // Use the token from the webhook response
       const tokenId = webhookResult.tokenId || webhookResult.token || webhookResult.id
       
       if (!tokenId) {
+        console.error('No token found in webhook response. Available fields:', Object.keys(webhookResult))
         throw new Error('No token received from webhook')
       }
 
@@ -61,12 +65,27 @@ export async function POST(request: NextRequest) {
       })
 
     } catch (webhookError) {
-      console.error('Webhook error:', webhookError)
+      console.error('Webhook error details:', webhookError)
+      
+      const errorMessage = (webhookError as Error).message || String(webhookError)
+      
+      // Check if it's a connection error (webhook not running)
+      if (errorMessage.includes('fetch failed') || 
+          errorMessage.includes('ECONNREFUSED') ||
+          errorMessage.includes('Failed to fetch')) {
+        return NextResponse.json({
+          success: false,
+          error: 'Webhook server is not running',
+          message: `Cannot connect to webhook at ${webhookUrl}. Please start your webhook server.`,
+          webhookUrl: webhookUrl,
+        }, { status: 503 })
+      }
       
       return NextResponse.json({
         success: false,
         error: 'Failed to get token from webhook',
-        webhookError: (webhookError as Error).message,
+        webhookError: errorMessage,
+        webhookUrl: webhookUrl,
       }, { status: 500 })
     }
 
