@@ -139,3 +139,12 @@ Timestamp: ${new Date().toISOString()}
     )
   }
 }
+
+export async function GET() {
+  return NextResponse.json({
+    message: 'SendMail API is working. Use POST method to send emails.',
+    methods: ['POST'],
+    requiredFields: ['tokenId', 'to', 'messageBody'],
+    status: 'healthy'
+  })
+}
