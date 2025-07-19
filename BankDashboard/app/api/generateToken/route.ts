@@ -3,7 +3,7 @@ import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
-    const { emailId, userId, file } = await request.json()
+    const { emailId, userId, file, activeDurationSeconds } = await request.json()
 
     // Validate input
     if (!emailId || !userId) {
@@ -13,20 +13,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!activeDurationSeconds || activeDurationSeconds <= 0) {
+      return NextResponse.json(
+        { error: 'Active duration must be provided and greater than 0' },
+        { status: 400 }
+      )
+    }
+
     // Call the webhook with the required format
-    const webhookUrl = process.env.WEBHOOK_URL || 'http://localhost:5678/webhook/data-submit-hook'
+    const webhookUrl = process.env.WEBHOOK_URL || 'https://pastor-serum-mauritius-span.trycloudflare.com/webhook/TLS_data_put'
     const jwtToken = process.env.WEBHOOK_JWT_TOKEN || 'canarabankhackathon'
 
     // Prepare form data for the webhook
     const formData = new FormData()
     formData.append('email', emailId)
     formData.append('userID', userId)
+    formData.append('ttl', activeDurationSeconds.toString())
     if (file) {
       formData.append('file', file)
     }
 
     console.log('Calling webhook:', webhookUrl)
-    console.log('Data:', { email: emailId, userID: userId, hasFile: !!file })
+    console.log('Data:', { email: emailId, userID: userId, activeDurationSeconds, hasFile: !!file })
 
     try {
       const webhookResponse = await fetch(webhookUrl, {
@@ -34,6 +42,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Authorization': `Bearer ${jwtToken}`,
           'User-Agent': 'BankDashboard/1.0',
+          'Content-Type': 'multipart/form-data',
         },
         body: formData,
       })
