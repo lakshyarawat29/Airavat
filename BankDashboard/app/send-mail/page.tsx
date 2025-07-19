@@ -9,13 +9,14 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Home, Mail, CheckCircle, AlertCircle, FileText, Shield, Send } from "lucide-react"
+import { Home, Mail, CheckCircle, AlertCircle, FileText, Shield, Send, Clock } from "lucide-react"
 import Link from "next/link"
 
 interface FormData {
   emailId: string
   userId: string
   file: File | null
+  activationTime: string
 }
 
 interface TokenFormData {
@@ -29,6 +30,7 @@ interface FormErrors {
   userId?: string
   file?: string
   messageBody?: string
+  activationTime?: string
 }
 
 export default function SendMailPage() {
@@ -36,6 +38,7 @@ export default function SendMailPage() {
     emailId: "",
     userId: "",
     file: null,
+    activationTime: "",
   })
   const [tokenFormData, setTokenFormData] = useState<TokenFormData>({
     tokenId: "",
@@ -96,6 +99,23 @@ export default function SendMailPage() {
     }
   }
 
+  // Helper function to calculate duration in seconds
+  const calculateActiveDurationSeconds = (activationTime: string): number => {
+    if (!activationTime) return 0
+    
+    const currentTime = new Date()
+    const selectedTime = new Date(activationTime)
+    
+    // If selected time is in the past or current, return 0
+    if (selectedTime <= currentTime) {
+      return 0
+    }
+    
+    // Calculate difference in seconds
+    const diffInMs = selectedTime.getTime() - currentTime.getTime()
+    return Math.floor(diffInMs / 1000)
+  }
+
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}
 
@@ -133,6 +153,18 @@ export default function SendMailPage() {
       }
     }
 
+    // Activation time validation
+    if (!formData.activationTime.trim()) {
+      newErrors.activationTime = "Token activation time is required"
+    } else {
+      const activeDurationSeconds = calculateActiveDurationSeconds(formData.activationTime)
+      if (activeDurationSeconds <= 0) {
+        newErrors.activationTime = "Activation time must be in the future"
+      } else if (activeDurationSeconds < 60) {
+        newErrors.activationTime = "Activation time must be at least 1 minute from now"
+      }
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -164,16 +196,28 @@ export default function SendMailPage() {
     setIsGeneratingToken(true)
 
     try {
-      // Generate token via TLS API
+      // Calculate activation duration in seconds
+      const activeDurationSeconds = calculateActiveDurationSeconds(formData.activationTime)
+      
+      // Prepare form data for webhook integration
+      const tokenData = {
+        emailId: formData.emailId,
+        userId: formData.userId,
+        activeDurationSeconds,
+        file: formData.file ? {
+          name: formData.file.name,
+          size: formData.file.size,
+          type: formData.file.type
+        } : null
+      }
+
+      // Generate token via TLS API (which will call the webhook)
       const response = await fetch("/api/generateToken", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          emailId: formData.emailId,
-          userId: formData.userId,
-        }),
+        body: JSON.stringify(tokenData),
       })
 
       if (response.ok) {
@@ -236,6 +280,7 @@ export default function SendMailPage() {
           emailId: "",
           userId: "",
           file: null,
+          activationTime: "",
         })
         setTokenFormData({
           tokenId: "",
@@ -350,6 +395,32 @@ export default function SendMailPage() {
                     )}
                   </div>
                   <p className="text-xs text-gray-500">Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)</p>
+                </div>
+
+                {/* Token Activation Time */}
+                <div className="space-y-2">
+                  <Label htmlFor="activationTime" className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Token Activation Time *
+                  </Label>
+                  <Input
+                    id="activationTime"
+                    name="activationTime"
+                    type="datetime-local"
+                    value={formData.activationTime}
+                    onChange={handleInputChange}
+                    className={`w-full ${errors.activationTime ? "border-red-500 focus:border-red-500" : ""}`}
+                    min={new Date(Date.now() + 60000).toISOString().slice(0, 16)} // Minimum 1 minute from now
+                  />
+                  {errors.activationTime && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.activationTime}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500">
+                    Select when the token should become active. Current time: {new Date().toLocaleString()}
+                  </p>
                 </div>
 
                 {/* Status Messages */}
