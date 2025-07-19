@@ -27,14 +27,17 @@ export async function POST(request: NextRequest) {
     // Prepare form data for the webhook
     const formData = new FormData()
     formData.append('email', emailId)
-    formData.append('userID', userId)
+    
+    const hashedUserId = crypto.createHash("sha256").update(userId).digest("hex")
+    formData.append('userID', hashedUserId)
+    
     formData.append('ttl', activeDurationSeconds.toString())
     if (file) {
       formData.append('file', file)
     }
 
     console.log('Calling webhook:', webhookUrl)
-    console.log('Data:', { email: emailId, userID: userId, activeDurationSeconds, hasFile: !!file })
+    console.log('Data:', { email: emailId, userID: hashedUserId, activeDurationSeconds, hasFile: !!file })
 
     try {
       const webhookResponse = await fetch(webhookUrl, {
