@@ -1,13 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { Shield, Brain, Workflow, Blocks, Lock, Eye, Users, Zap, ChevronRight, Check, Info } from "lucide-react"
+import { Shield, Brain, Workflow, Blocks, Lock, Eye, Users, Zap, ChevronRight, Check, Info, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ThemeContext, useTheme, getThemeClasses } from "@/hooks/use-theme"
 import { ZKProofDemo } from "@/components/zk-proof-demo"
@@ -32,6 +35,16 @@ function AiravatContent() {
 
   const [activeAgent, setActiveAgent] = useState<string | null>(null)
   const [consentSaved, setConsentSaved] = useState(false)
+  
+  // PDF check states
+  const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false)
+  const [pdfCheckData, setPdfCheckData] = useState({
+    userID: "",
+    email: "",
+    token: ""
+  })
+  const [userFiles, setUserFiles] = useState<any[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const features = [
     {
@@ -100,6 +113,88 @@ function AiravatContent() {
     setTimeout(() => setConsentSaved(false), 3000)
   }
 
+  // Hash function for userID
+  const hashUserID = async (userID: string): Promise<string> => {
+    const encoder = new TextEncoder()
+    const data = encoder.encode(userID)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  }
+
+  // Handle PDF check form submission
+  const handlePdfSubmit = async () => {
+    if (!pdfCheckData.userID || !pdfCheckData.email || !pdfCheckData.token) {
+      alert("Please fill in all required fields: UserID, Email, and Token")
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      // Generate userHash from userID
+      const hashedUserID = await hashUserID(pdfCheckData.userID)
+
+      // Create FormData - only send userHash, not userID
+      const formData = new FormData()
+      formData.append('userHash', hashedUserID)
+      formData.append('email', pdfCheckData.email)
+      formData.append('token', pdfCheckData.token)
+
+      // Make API call to your real endpoint with required header
+      const response = await fetch('https://pastor-serum-mauritius-span.trycloudflare.com/webhook-test/get_file_back', {
+        method: 'POST',
+        headers: {
+          'application': 'bank_application_data_call_airavat'
+        },
+        body: formData
+      })
+
+      console.log('Response status:', response.status)
+      console.log('Response headers:', response.headers)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+      console.log('API Response:', result) // Debug log
+
+      // Adjust this logic based on your real API response structure
+      if (result.success && result.files) {
+        setUserFiles(result.files)
+      } else if (result.files) {
+        // Handle case where success field might not exist but files do
+        setUserFiles(result.files)
+      } else {
+        setUserFiles([])
+        alert(result.message || result.error || "File access denied")
+      }
+    } catch (error) {
+      console.error('Error checking files:', error)
+      
+      // Check if it's a network error
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        alert("Network error: Unable to reach the API. Please check your connection or try again later.")
+      } else {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+        alert("An error occurred while checking files: " + errorMessage)
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Handle opening PDF check dialog
+  const handleOpenPdfCheck = () => {
+    setPdfCheckData({
+      userID: "",
+      email: "",
+      token: ""
+    })
+    setUserFiles([])
+    setIsPdfDialogOpen(true)
+  }
+
   return (
     <div
       className={`min-h-screen ${themeClasses.bg} ${themeClasses.text} overflow-hidden transition-colors duration-500`}
@@ -125,7 +220,7 @@ function AiravatContent() {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content */} 
       <div className="relative z-10">
         {/* Hero Section */}
         <section className="min-h-screen flex items-center justify-center px-4">
@@ -503,7 +598,7 @@ function AiravatContent() {
                       </p>
                       <Button
                         onClick={handleSaveConsent}
-                        className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold py-3 rounded-lg transition-all duration-300"
+                        className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 mb-3"
                         disabled={consentSaved}
                       >
                         {consentSaved ? (
@@ -515,6 +610,107 @@ function AiravatContent() {
                           "Save Consent Preferences"
                         )}
                       </Button>
+                      
+                      {/* Check PDF File Button */}
+                      <Dialog open={isPdfDialogOpen} onOpenChange={setIsPdfDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button
+                            onClick={handleOpenPdfCheck}
+                            className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold py-3 rounded-lg transition-all duration-300"
+                          >
+                            <FileText className="w-5 h-5 mr-2" />
+                            Check Files
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Check Files</DialogTitle>
+                            <DialogDescription>
+                              Enter your credentials to access your files.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <Label htmlFor="userID" className="text-right">
+                                User ID
+                              </Label>
+                              <Input
+                                id="userID"
+                                type="text"
+                                value={pdfCheckData.userID}
+                                onChange={(e) => setPdfCheckData(prev => ({ ...prev, userID: e.target.value }))}
+                                className="col-span-3"
+                                placeholder="Enter your user ID"
+                              />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <Label htmlFor="email" className="text-right">
+                                Email
+                              </Label>
+                              <Input
+                                id="email"
+                                type="email"
+                                value={pdfCheckData.email}
+                                onChange={(e) => setPdfCheckData(prev => ({ ...prev, email: e.target.value }))}
+                                className="col-span-3"
+                                placeholder="Enter your email"
+                                required
+                              />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <Label htmlFor="token" className="text-right">
+                                Token
+                              </Label>
+                              <Input
+                                id="token"
+                                type="text"
+                                value={pdfCheckData.token}
+                                onChange={(e) => setPdfCheckData(prev => ({ ...prev, token: e.target.value }))}
+                                className="col-span-3"
+                                placeholder="Enter your token"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-4">
+                            <Button 
+                              onClick={handlePdfSubmit}
+                              disabled={isSubmitting || !pdfCheckData.userID || !pdfCheckData.email || !pdfCheckData.token}
+                              className="w-full"
+                            >
+                              {isSubmitting ? "Checking..." : "Submit"}
+                            </Button>
+                            
+                            {userFiles.length > 0 && (
+                              <div className="border rounded-lg p-4 bg-green-50 dark:bg-green-900/20">
+                                <h4 className="font-semibold text-green-800 dark:text-green-200 mb-3">
+                                  Files Access Granted ({userFiles.length} files)
+                                </h4>
+                                <div className="space-y-2">
+                                  {userFiles.map((file, index) => (
+                                    <div key={index} className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border">
+                                      <div className="flex items-center space-x-2">
+                                        <FileText className="w-4 h-4 text-blue-600" />
+                                        <div>
+                                          <div className="text-sm font-medium">{file.name}</div>
+                                          <div className="text-xs text-gray-500">{file.type}</div>
+                                        </div>
+                                      </div>
+                                      <a 
+                                        href={file.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                                      >
+                                        Open
+                                      </a>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </CardContent>
                 </Card>
