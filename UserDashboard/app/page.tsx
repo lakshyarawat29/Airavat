@@ -1067,34 +1067,34 @@ function AiravatContent() {
                             {userFiles.length > 0 && (
                               <div className="border rounded-lg p-4 bg-green-50 dark:bg-green-900/20">
                                 <h4 className="font-semibold text-green-800 dark:text-green-200 mb-3">
-                                  Files Access Granted ({userFiles.length}{' '}
-                                  files)
+                                  Files Access Granted ({userFiles.length} files)
                                 </h4>
-                                <div className="space-y-2">
+                                <div className="space-y-4">
                                   {userFiles.map((file, index) => (
                                     <div
                                       key={index}
-                                      className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border"
+                                      className="flex flex-col items-start p-2 bg-white dark:bg-gray-800 rounded border"
                                     >
-                                      <div className="flex items-center space-x-2">
+                                      <div className="flex items-center space-x-2 mb-2">
                                         <FileText className="w-4 h-4 text-blue-600" />
                                         <div>
-                                          <div className="text-sm font-medium">
-                                            {file.name}
-                                          </div>
-                                          <div className="text-xs text-gray-500">
-                                            {file.type}
-                                          </div>
+                                          <div className="text-sm font-medium">{file.name}</div>
+                                          <div className="text-xs text-gray-500">{file.type}</div>
                                         </div>
                                       </div>
-                                      <a
-                                        href={file.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
-                                      >
-                                        Open
-                                      </a>
+                                      {/* Inline PDF viewer for binary files (assume PDF for demo) */}
+                                      {file.type === 'application/pdf' ? (
+                                        <iframe
+                                          src={file.url}
+                                          title={file.name}
+                                          className="w-full h-96 border rounded"
+                                          sandbox="allow-scripts"
+                                          style={{ pointerEvents: 'auto' }}
+                                        />
+                                      ) : (
+                                        <div className="text-xs text-gray-500">Unsupported file type</div>
+                                      )}
+                                      {/* No download button, no external link */}
                                     </div>
                                   ))}
                                 </div>
