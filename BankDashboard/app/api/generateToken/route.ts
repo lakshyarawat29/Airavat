@@ -3,7 +3,26 @@ import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
-    const { emailId, userId, file, activeDurationSeconds } = await request.json()
+    // Handle both JSON and FormData requests
+    let emailId, userId, file, activeDurationSeconds
+    
+    const contentType = request.headers.get('content-type')
+    
+    if (contentType?.includes('multipart/form-data')) {
+      // Handle FormData for file uploads
+      const formData = await request.formData()
+      emailId = formData.get('emailId') as string
+      userId = formData.get('userId') as string
+      file = formData.get('file') as File
+      activeDurationSeconds = parseInt(formData.get('activeDurationSeconds') as string)
+    } else {
+      // Handle JSON requests
+      const data = await request.json()
+      emailId = data.emailId
+      userId = data.userId
+      file = data.file
+      activeDurationSeconds = data.activeDurationSeconds
+    }
 
     // Validate input
     if (!emailId || !userId) {
@@ -21,23 +40,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Call the webhook with the required format
-    const webhookUrl = process.env.WEBHOOK_URL || 'https://pastor-serum-mauritius-span.trycloudflare.com/webhook/TLS_data_put'
-    const jwtToken = process.env.WEBHOOK_JWT_TOKEN || 'canarabankhackathon'
+    const webhookUrl = process.env.WEBHOOK_URL || 'https://diary-listings-applied-biblical.trycloudflare.com/webhook/data-submit-hook'
+    const jwtToken = process.env.WEBHOOK_JWT_TOKEN || 'eyJhbGciOiJIUzI1NiJ9.e30.NO3TAh5-AR98dkx9UIgBDE-u4hZs4Rh7F0qu8iRfob8'
 
     // Prepare form data for the webhook
     const formData = new FormData()
     formData.append('email', emailId)
     
     const hashedUserId = crypto.createHash("sha256").update(userId).digest("hex")
-    formData.append('userID', hashedUserId)
+    formData.append('userHash', hashedUserId)
     
     formData.append('ttl', activeDurationSeconds.toString())
     if (file) {
-      formData.append('file', file)
+      // Ensure file is properly handled as binary
+      if (file instanceof File) {
+        formData.append('file', file, file.name)
+      } else {
+        // If file is base64 or other format, convert to blob
+        const blob = new Blob([file])
+        formData.append('file', blob, 'file')
+      }
     }
 
     console.log('Calling webhook:', webhookUrl)
-    console.log('Data:', { email: emailId, userID: hashedUserId, activeDurationSeconds, hasFile: !!file })
+    console.log('Data:', { email: emailId, userHash: hashedUserId, activeDurationSeconds, hasFile: !!file })
 
     try {
       const webhookResponse = await fetch(webhookUrl, {
@@ -45,7 +71,6 @@ export async function POST(request: NextRequest) {
         headers: {
           'Authorization': `Bearer ${jwtToken}`,
           'User-Agent': 'BankDashboard/1.0',
-          'Content-Type': 'multipart/form-data',
         },
         body: formData,
       })
