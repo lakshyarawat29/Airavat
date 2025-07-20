@@ -124,12 +124,14 @@ The application includes a consent management system that allows users to contro
   - `fraudDetection`: false (default)
   - `creditScoring`: false (default)
   - `marketing`: false (default)
+- **Additional Notes**: Text field for user comments and specific requirements (empty by default)
 
 ### Default Values
 
 - All data sharing levels default to `Minimal`
 - All purpose flags default to `false`
 - Time limit defaults to 30 days
+- Additional notes default to empty string
 
 Consent preferences are stored in MongoDB and linked to the user's unique userID. When a user logs in for the first time, default preferences are created. Users can modify these preferences through the dashboard interface.
 
