@@ -16,7 +16,7 @@ export interface UserRequest {
   thirdParty: string;
   requestType: string;
   userId: string;
-  status: 'pending' | 'in-progress' | 'done';
+  status: 'pending' | 'in-progress' | 'done' | 'completed' | 'terminated';
   timestamp: string;
   currentAgent: number;
   completedAgents: number[];
@@ -49,6 +49,10 @@ export default function LiveFeedPage() {
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'done':
         return 'bg-green-100 text-green-800 border-green-200';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'terminated':
+        return 'bg-gray-200 text-gray-800 border-gray-300';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -62,6 +66,10 @@ export default function LiveFeedPage() {
         return <Clock className="w-4 h-4" />;
       case 'done':
         return <CheckCircle className="w-4 h-4" />;
+      case 'completed':
+        return <CheckCircle className="w-4 h-4" />;
+      case 'terminated':
+        return <AlertCircle className="w-4 h-4" />;
       default:
         return null;
     }
@@ -101,7 +109,7 @@ export default function LiveFeedPage() {
         {error && <p className="text-red-600">Error: {error.message}</p>}
         {!isLoading && !error && requests && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <Card>
                 <CardContent className="p-4">
                   <Stat
@@ -133,10 +141,25 @@ export default function LiveFeedPage() {
                   <Stat
                     label="Completed"
                     count={
-                      requests.filter((r: UserRequest) => r.status === 'done')
-                        .length
+                      requests.filter(
+                        (r: UserRequest) =>
+                          r.status === 'done' || r.status === 'completed'
+                      ).length
                     }
                     color="green"
+                  />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <Stat
+                    label="Terminated"
+                    count={
+                      requests.filter(
+                        (r: UserRequest) => r.status === 'terminated'
+                      ).length
+                    }
+                    color="gray"
                   />
                 </CardContent>
               </Card>
@@ -223,6 +246,7 @@ const colorMap: Record<string, string> = {
   yellow: 'bg-yellow-500',
   green: 'bg-green-500',
   blue: 'bg-blue-500',
+  gray: 'bg-gray-400',
 };
 
 const Stat = ({
@@ -246,6 +270,6 @@ const Stat = ({
 const Info = ({ label, value }: { label: string; value: string }) => (
   <div>
     <p className="text-sm text-gray-600">{label}</p>
-    <p className="font-medium">{value}</p>
+    <p className="font-medium break-all overflow-x-auto max-w-xs">{value}</p>
   </div>
 );

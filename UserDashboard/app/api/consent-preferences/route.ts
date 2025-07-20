@@ -1,29 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import ConsentPreference from '@/models/ConsentPreference';
+import { verifyToken } from '@/lib/auth';
 
-// GET - Fetch consent preferences for the authenticated user
+// GET - Fetch consent preferences for a user (userID from query param)
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
-
-    // Verify JWT token from cookie
-    const token = request.cookies.get('auth-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'No token provided' }, { status: 401 });
+    const userID = request.headers.get('x-user-id');
+    if (!userID) {
+      return NextResponse.json(
+        { error: 'No userID provided' },
+        { status: 400 }
+      );
     }
-
-    const decoded = await verifyToken(token);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
-    const userID = decoded.userID;
-
     // Find existing consent preferences
     let consentPreferences = await ConsentPreference.findOne({ userID });
-
     // If no preferences exist, return default values
     if (!consentPreferences) {
       consentPreferences = {
@@ -41,7 +33,6 @@ export async function GET(request: NextRequest) {
         additionalNotes: '',
       };
     }
-
     return NextResponse.json(consentPreferences);
   } catch (error) {
     console.error('Error fetching consent preferences:', error);
@@ -52,12 +43,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create or update consent preferences
+// POST - Create or update consent preferences (userID from body)
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
-
-    // Verify JWT token from cookie
     const token = request.cookies.get('auth-token')?.value;
     if (!token) {
       return NextResponse.json({ error: 'No token provided' }, { status: 401 });
@@ -69,9 +58,8 @@ export async function POST(request: NextRequest) {
     }
 
     const userID = decoded.userID;
-    const body = await request.json();
 
-    // Validate the data
+    const body = await request.json();
     const {
       transactions,
       accountDetails,
@@ -80,7 +68,12 @@ export async function POST(request: NextRequest) {
       purposes,
       additionalNotes,
     } = body;
-
+    if (!userID) {
+      return NextResponse.json(
+        { error: 'No userID provided' },
+        { status: 400 }
+      );
+    }
     // Validate enum values
     const validLevels = ['Minimal', 'Moderate', 'Full'];
     if (transactions && !validLevels.includes(transactions)) {
@@ -101,7 +94,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
     // Validate timeLimit
     if (timeLimit && (timeLimit < 1 || timeLimit > 365)) {
       return NextResponse.json(
@@ -109,7 +101,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
     // Prepare update data with defaults
     const updateData = {
       userID,
@@ -125,7 +116,6 @@ export async function POST(request: NextRequest) {
       },
       additionalNotes: additionalNotes || '',
     };
-
     // Upsert the consent preferences
     const result = await ConsentPreference.findOneAndUpdate(
       { userID },
@@ -136,7 +126,6 @@ export async function POST(request: NextRequest) {
         setDefaultsOnInsert: true,
       }
     );
-
     return NextResponse.json({
       message: 'Consent preferences saved successfully',
       data: result,
