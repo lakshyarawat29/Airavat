@@ -3,7 +3,7 @@ import './globals.css';
 import ThemeClientProvider from '@/components/ThemeClientProvider';
 
 export const metadata: Metadata = {
-  title: 'v0 App',
+  title: 'Airavat User Dashboard',
   description: 'Created with v0',
   generator: 'v0.dev',
 };

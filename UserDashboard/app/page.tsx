@@ -115,7 +115,7 @@ function AiravatContent() {
   const features = [
     {
       id: 'vra',
-      title: 'VRA - Vigilant Risk Analyzer',
+      title: 'VRA - Verification and Risk Assessment Agent',
       description:
         'AI-driven risk scoring to block risky data requests and protect sensitive information',
       icon: Shield,
@@ -123,7 +123,7 @@ function AiravatContent() {
     },
     {
       id: 'rba',
-      title: 'RBA - Request Brainiac Agent',
+      title: 'RBA - Request Builder Agent',
       description:
         'Minimizes shared data using ML-driven decisions for optimal privacy',
       icon: Brain,
@@ -131,7 +131,7 @@ function AiravatContent() {
     },
     {
       id: 'tma',
-      title: 'TMA - Task Maestro Agent',
+      title: 'TMA - Task Master Agent',
       description:
         'Orchestrates secure data workflows with zero-trust verification',
       icon: Workflow,
@@ -139,7 +139,7 @@ function AiravatContent() {
     },
     {
       id: 'bba',
-      title: 'BBA - Blockchain Builder Ace',
+      title: 'BBA - Blockchain Based Agent',
       description:
         'Logs all actions on blockchain for complete transparency and auditability',
       icon: Blocks,
@@ -147,21 +147,56 @@ function AiravatContent() {
     },
     {
       id: 'zkba',
-      title: 'ZKBA - Zero-Knowledge Builder Ace',
+      title: 'ZKBA - Zero-Knowledge Based Agent',
       description:
-        'Uses ZKPs for privacy-preserving authentication without data exposure',
+        'This agent builds zero-knowledge protocols (ZKPs) for requests requiring privacy-preserving computation. It receives requests from the TMA and returns the necessary details to initiate a ZKP endpoint.',
       icon: Lock,
       color: 'from-orange-500 to-yellow-500',
+    },
+    {
+      id: 'dra',
+      title: 'DRA - Data Retrieval Agent',
+      description:
+        'This agent manages data lookup and retrieval securely, abstracting endpoints. It handles two request types: data lookup from the RBA (locating data without responding) and data fetch from the TMA (moving data to the Time-Lock Server with a timer)',
+      icon: Blocks,
+      color: 'from-teal-500 to-cyan-500',
+    },
+    {
+      id: 'tlsa',
+      title: 'TLSA - Time Lock Server Agent',
+      description:
+        'This agent guards the Time-Lock Server, performing secondary risk assessments and verifications (e.g., IP checks) on access requests. It denies requests if the risk exceeds the original assessment, acting as a vault security guard.',
+      icon: Lock,
+      color: 'from-indigo-500 to-purple-500',
+    },
+    {
+      id: 'tls',
+      title: 'TLS - Time Lock Server',
+      description:
+        'This server stores shared data in a timed lock, allowing retrieval only until the timer expires, after which the data is deleted',
+      icon: Brain,
+      color: 'from-emerald-500 to-green-500',
+    },
+    {
+      id: 'oca',
+      title: 'OCA - Orchestration Control Agent',
+      description:
+        'Coordinates and manages the overall workflow between all agents, ensuring proper sequencing and error handling',
+      icon: Workflow,
+      color: 'from-violet-500 to-purple-500',
     },
   ];
 
   const agents = [
-    { id: 'vra', name: 'VRA', role: 'Risk Assessment', x: 20, y: 30 },
-    { id: 'rba', name: 'RBA', role: 'Request Processing', x: 50, y: 20 },
-    { id: 'tma', name: 'TMA', role: 'Task Orchestration', x: 80, y: 30 },
-    { id: 'bba', name: 'BBA', role: 'Blockchain Logging', x: 20, y: 70 },
-    { id: 'zkba', name: 'ZKBA', role: 'Zero-Knowledge Proofs', x: 50, y: 80 },
-    { id: 'oca', name: 'OCA', role: 'Orchestration Control', x: 80, y: 70 },
+    { id: 'vra', name: 'VRA', role: 'Risk Assessment', x: 15, y: 20 },
+    { id: 'rba', name: 'RBA', role: 'Request Processing', x: 35, y: 15 },
+    { id: 'tma', name: 'TMA', role: 'Task Orchestration', x: 55, y: 20 },
+    { id: 'dra', name: 'DRA', role: 'Data Retrieval', x: 75, y: 15 },
+    { id: 'tlsa', name: 'TLSA', role: 'Time Lock Security', x: 85, y: 35 },
+    { id: 'bba', name: 'BBA', role: 'Blockchain Logging', x: 15, y: 60 },
+    { id: 'zkba', name: 'ZKBA', role: 'Zero-Knowledge Proofs', x: 35, y: 70 },
+    { id: 'tls', name: 'TLS', role: 'Time Lock Server', x: 55, y: 65 },
+    { id: 'oca', name: 'OCA', role: 'Orchestration Control', x: 75, y: 60 },
   ];
 
   const getDataLevelText = (level: string) => {
@@ -454,12 +489,12 @@ function AiravatContent() {
               <p
                 className={`text-xl ${themeClasses.mutedText} max-w-3xl mx-auto transition-colors duration-300`}
               >
-                Eight specialized AI agents working in harmony to protect your
+                Nine specialized AI agents working in harmony to protect your
                 fintech data
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
               {features.map((feature, index) => (
                 <Card
                   key={feature.id}
@@ -1208,7 +1243,7 @@ function AiravatContent() {
                 </div>
               </Card>
 
-              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
                 {agents.map((agent) => (
                   <div
                     key={agent.id}
@@ -1337,7 +1372,7 @@ function AiravatContent() {
                 variant="secondary"
                 className="bg-gradient-to-r from-purple-500/20 to-cyan-500/20 text-purple-300 px-4 py-2 text-lg"
               >
-                🚀 Built with grit and code in 4 days for SuRaksha Hackathon!
+                🚀 Build in Accordance to the SuRaksha Hackathon Rules
               </Badge>
             </div>
           </div>
@@ -1367,13 +1402,23 @@ function AiravatContent() {
             <div
               className={`flex justify-center gap-6 text-sm ${themeClasses.mutedText}`}
             >
-              <a href="#" className="hover:text-cyan-400 transition-colors">
+              <a
+                href="https://www.freeprivacypolicy.com/live/f05a3ced-628e-450f-8634-9d03d21d858f"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-cyan-400 transition-colors"
+              >
                 Privacy Policy
               </a>
               <a href="#" className="hover:text-cyan-400 transition-colors">
                 Terms of Service
               </a>
-              <a href="#" className="hover:text-cyan-400 transition-colors">
+              <a
+                href="https://www.legalwiz.in/blog/what-is-gdpr-compliance-and-applicability-in-india"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-cyan-400 transition-colors"
+              >
                 GDPR Compliance
               </a>
               <a href="#" className="hover:text-cyan-400 transition-colors">
