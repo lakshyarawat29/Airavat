@@ -35,13 +35,38 @@ export async function POST(request: Request) {
     const collection = db.collection('userRequests');
 
     const reqBody = await request.json();
-    const { transactionID } = reqBody;
+    const { transactionID, status, CompletionTimeStamp, msg } = reqBody;
 
     if (!transactionID) {
       return NextResponse.json(
         { error: 'Missing transactionID' },
         { status: 400 }
       );
+    }
+
+    // Handle completed or terminated status upsert
+    if (status === 'completed' || status === 'terminated') {
+      const now = CompletionTimeStamp || new Date().toISOString();
+      const logEntry = {
+        id: `log-${Date.now()}`,
+        message: msg || '',
+        timestamp: now.split('T')[1]?.split('Z')[0] || now,
+        status,
+      };
+      await collection.updateOne(
+        { id: transactionID },
+        {
+          $set: {
+            status,
+            CompletionTimeStamp: now,
+          },
+          $addToSet: {
+            logs: logEntry,
+          },
+        },
+        { upsert: true }
+      );
+      return NextResponse.json({ message: `Request marked as ${status}` });
     }
 
     const now = new Date().toISOString();
