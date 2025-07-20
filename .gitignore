@@ -16,6 +16,7 @@ eggs/
 .eggs/
 lib/
 lib64/
+!UserDashboard/lib/
 parts/
 sdist/
 var/
@@ -208,3 +209,7 @@ Dockerfile
 docker/
 # VSCode
 .vscode/
+
+agents/vra/testing
+agents/vra/risk_asses_model.py
+agents/dra/node_modules
