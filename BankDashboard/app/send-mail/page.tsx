@@ -155,7 +155,7 @@ export default function SendMailPage() {
 
     // Activation time validation
     if (!formData.activationTime.trim()) {
-      newErrors.activationTime = "Token Validation time is required"
+      newErrors.activationTime = "Token activation time is required"
     } else {
       const activeDurationSeconds = calculateActiveDurationSeconds(formData.activationTime)
       if (activeDurationSeconds <= 0) {
@@ -199,25 +199,22 @@ export default function SendMailPage() {
       // Calculate activation duration in seconds
       const activeDurationSeconds = calculateActiveDurationSeconds(formData.activationTime)
       
-      // Prepare form data for webhook integration
-      const tokenData = {
-        emailId: formData.emailId,
-        userId: formData.userId,
-        activeDurationSeconds,
-        file: formData.file ? {
-          name: formData.file.name,
-          size: formData.file.size,
-          type: formData.file.type
-        } : null
+      // Prepare FormData for the API request (since we may have a file)
+      const apiFormData = new FormData()
+      apiFormData.append('emailId', formData.emailId)
+      apiFormData.append('userId', formData.userId)
+      apiFormData.append('activeDurationSeconds', activeDurationSeconds.toString())
+      
+      // Add file if present
+      if (formData.file) {
+        apiFormData.append('file', formData.file)
       }
 
-      // Generate token via TLS API (which will call the webhook)
+      // Generate token via API (which will call the webhook)
       const response = await fetch("/api/generateToken", {
         method: "POST",
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        body: JSON.stringify(tokenData),
+        // Don't set Content-Type header when sending FormData - let browser set it with boundary
+        body: apiFormData,
       })
 
       if (response.ok) {
@@ -397,11 +394,11 @@ export default function SendMailPage() {
                   <p className="text-xs text-gray-500">Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)</p>
                 </div>
 
-                {/* Token Validation Time */}
+                {/* Token Activation Time */}
                 <div className="space-y-2">
                   <Label htmlFor="activationTime" className="flex items-center gap-2">
                     <Clock className="w-4 h-4" />
-                    Token Validation Time *
+                    Token Activation Time *
                   </Label>
                   <Input
                     id="activationTime"
