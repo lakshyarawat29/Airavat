@@ -277,7 +277,7 @@ function AiravatContent() {
 
       // Make API call to your real endpoint with required header
       const response = await fetch(
-        'https://amd-varying-screening-janet.trycloudflare.com/webhook/retrieve_file',
+        'https://pharmacies-dryer-wy-mph.trycloudflare.com/webhook/retrieve_file',
         {
           method: 'POST',
           headers: {
