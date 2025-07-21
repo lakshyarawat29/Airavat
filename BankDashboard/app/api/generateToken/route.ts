@@ -6,22 +6,39 @@ export async function POST(request: NextRequest) {
     // Handle both JSON and FormData requests
     let emailId, userId, file, activeDurationSeconds
     
-    const contentType = request.headers.get('content-type')
+    const contentType = request.headers.get('content-type') || ''
+    console.log('Request content-type:', contentType)
     
-    if (contentType?.includes('multipart/form-data')) {
-      // Handle FormData for file uploads
+    // Check if content-type indicates multipart/form-data AND has boundary
+    const isValidFormData = contentType.startsWith('multipart/form-data') && contentType.includes('boundary=')
+    
+    if (isValidFormData) {
+      console.log('Parsing as FormData (valid boundary detected)')
       const formData = await request.formData()
       emailId = formData.get('emailId') as string
       userId = formData.get('userId') as string
       file = formData.get('file') as File
       activeDurationSeconds = parseInt(formData.get('activeDurationSeconds') as string)
+      console.log('Successfully parsed as FormData')
+    } else if (contentType.startsWith('multipart/form-data')) {
+      // FormData without proper boundary - this is the problematic case
+      console.log('Invalid FormData detected (missing boundary)')
+      return NextResponse.json(
+        { 
+          error: 'Invalid FormData format',
+          message: 'FormData request is missing boundary parameter. Make sure you are not manually setting Content-Type header when sending FormData.',
+          contentType: contentType
+        },
+        { status: 400 }
+      )
     } else {
-      // Handle JSON requests
+      console.log('Parsing as JSON')
       const data = await request.json()
       emailId = data.emailId
       userId = data.userId
       file = data.file
       activeDurationSeconds = data.activeDurationSeconds
+      console.log('Successfully parsed as JSON')
     }
 
     // Validate input
@@ -40,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Call the webhook with the required format
-    const webhookUrl = process.env.WEBHOOK_URL || 'https://amd-varying-screening-janet.trycloudflare.com/webhook/data-submit-hook'
+    const webhookUrl = process.env.WEBHOOK_URL || 'https://pharmacies-dryer-wy-mph.trycloudflare.com/webhook/data-submit-hook'
     const jwtToken = process.env.WEBHOOK_JWT_TOKEN || 'eyJhbGciOiJIUzI1NiJ9.e30.NO3TAh5-AR98dkx9UIgBDE-u4hZs4Rh7F0qu8iRfob8'
 
     // Prepare form data for the webhook
@@ -94,11 +111,12 @@ export async function POST(request: NextRequest) {
 
       console.log('Webhook response body:', webhookResult)
 
-      // Use the token from the webhook response
-      const tokenId = webhookResult.tokenId || webhookResult.token || webhookResult.id
+      // Use the token from the webhook response - handle the actual response format
+      const tokenId = webhookResult.token || webhookResult.tokenId || webhookResult.id
       
       if (!tokenId) {
         console.error('No token found in webhook response. Available fields:', Object.keys(webhookResult))
+        console.error('Full webhook response:', webhookResult)
         throw new Error('No token received from webhook')
       }
 
@@ -137,8 +155,34 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Token generation error:', error)
+    
+    // Provide specific error messages based on the error type
+    if (error instanceof Error) {
+      if (error.message.includes('FormData') || error.message.includes('boundary')) {
+        return NextResponse.json(
+          { 
+            error: 'Invalid request format',
+            message: 'Request must be sent as proper FormData with boundary or valid JSON. If using FormData, do not manually set Content-Type header.',
+            details: error.message
+          },
+          { status: 400 }
+        )
+      }
+      
+      if (error.message.includes('Could not parse request body')) {
+        return NextResponse.json(
+          { 
+            error: 'Invalid request body',
+            message: 'Request body could not be parsed as either FormData or JSON',
+            details: error.message
+          },
+          { status: 400 }
+        )
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to generate token' },
+      { error: 'Failed to generate token', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }
