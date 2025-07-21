@@ -155,7 +155,7 @@ export default function SendMailPage() {
 
     // Activation time validation
     if (!formData.activationTime.trim()) {
-      newErrors.activationTime = "Token activation time is required"
+      newErrors.activationTime = "Token Validation time is required"
     } else {
       const activeDurationSeconds = calculateActiveDurationSeconds(formData.activationTime)
       if (activeDurationSeconds <= 0) {
@@ -397,11 +397,11 @@ export default function SendMailPage() {
                   <p className="text-xs text-gray-500">Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB)</p>
                 </div>
 
-                {/* Token Activation Time */}
+                {/* Token Validation Time */}
                 <div className="space-y-2">
                   <Label htmlFor="activationTime" className="flex items-center gap-2">
                     <Clock className="w-4 h-4" />
-                    Token Activation Time *
+                    Token Validation Time *
                   </Label>
                   <Input
                     id="activationTime"
