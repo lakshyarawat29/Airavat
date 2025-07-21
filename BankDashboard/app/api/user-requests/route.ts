@@ -5,12 +5,12 @@ import clientPromise from '@/lib/mongodb';
 const AGENT_MAP: Record<string, number> = {
   VRA: 1,
   RBA: 2,
-  TMA: 3,
+  ZBKA: 3,
   DRA: 4,
-  ZBKA: 5,
-  OCA: 6,
-  TLSA: 7,
-  TLS: 8,
+  TLSA: 5,
+  TMA: 6,
+  OCA: 7,
+  BBA: 8,
 };
 
 export async function GET() {
