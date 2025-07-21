@@ -300,7 +300,7 @@ function AiravatContent() {
       console.log('Received file blob:', fileBlob);
 
       // Extract filename from Content-Disposition header
-      let filename = 'download-file';
+      let filename = 'Transfer File';
       const contentDisposition = response.headers.get('Content-Disposition');
       if (contentDisposition) {
         const match = contentDisposition.match(/filename="?([^";]+)"?/);
@@ -1087,15 +1087,14 @@ function AiravatContent() {
                                       return (
                                         <div key={index} className="flex flex-col gap-2">
                                           <span className="font-medium text-green-700 dark:text-green-200">{file.name}</span>
-                                          <a
-                                            href={fileUrl}
-                                            download={file.name}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="px-3 py-1 bg-cyan-500 text-white rounded hover:bg-cyan-600 transition-colors"
-                                          >
-                                            Download
-                                          </a>
+                                         <a
+  href={fileUrl}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="px-3 py-1 bg-cyan-500 text-white rounded hover:bg-cyan-600 transition-colors"
+>
+  Open PDF
+</a>
                                           <iframe src={fileUrl} title={file.name} className="w-full h-96 border rounded" />
                                         </div>
                                       );
@@ -1106,14 +1105,13 @@ function AiravatContent() {
                                         <div key={index} className="flex flex-col gap-2">
                                           <span className="font-medium text-green-700 dark:text-green-200">{file.name}</span>
                                           <a
-                                            href={fileUrl}
-                                            download={file.name}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="px-3 py-1 bg-cyan-500 text-white rounded hover:bg-cyan-600 transition-colors"
-                                          >
-                                            Download
-                                          </a>
+  href={fileUrl}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="px-3 py-1 bg-cyan-500 text-white rounded hover:bg-cyan-600 transition-colors"
+>
+  Open Image
+</a>
                                           <img src={fileUrl} alt={file.name} className="max-w-full max-h-96 border rounded" />
                                         </div>
                                       );
@@ -1123,15 +1121,14 @@ function AiravatContent() {
                                       return (
                                         <div key={index} className="flex flex-col gap-2">
                                           <span className="font-medium text-green-700 dark:text-green-200">{file.name}</span>
-                                          <a
-                                            href={fileUrl}
-                                            download={file.name}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="px-3 py-1 bg-cyan-500 text-white rounded hover:bg-cyan-600 transition-colors"
-                                          >
-                                            Download
-                                          </a>
+                                         <a
+  href={fileUrl}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="px-3 py-1 bg-cyan-500 text-white rounded hover:bg-cyan-600 transition-colors"
+>
+  Open Audio
+</a>
                                           <audio controls src={fileUrl} className="w-full" />
                                         </div>
                                       );
@@ -1141,15 +1138,14 @@ function AiravatContent() {
                                       return (
                                         <div key={index} className="flex flex-col gap-2">
                                           <span className="font-medium text-green-700 dark:text-green-200">{file.name}</span>
-                                          <a
-                                            href={fileUrl}
-                                            download={file.name}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="px-3 py-1 bg-cyan-500 text-white rounded hover:bg-cyan-600 transition-colors"
-                                          >
-                                            Download
-                                          </a>
+                                         <a
+  href={fileUrl}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="px-3 py-1 bg-cyan-500 text-white rounded hover:bg-cyan-600 transition-colors"
+>
+  Open Video
+</a>
                                           <video controls src={fileUrl} className="w-full max-h-96 border rounded" />
                                         </div>
                                       );
@@ -1159,15 +1155,14 @@ function AiravatContent() {
                                       return (
                                         <div key={index} className="flex flex-col gap-2">
                                           <span className="font-medium text-green-700 dark:text-green-200">{file.name}</span>
-                                          <a
-                                            href={fileUrl}
-                                            download={file.name}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="px-3 py-1 bg-cyan-500 text-white rounded hover:bg-cyan-600 transition-colors"
-                                          >
-                                            Download
-                                          </a>
+                                         <a
+  href={fileUrl}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="px-3 py-1 bg-cyan-500 text-white rounded hover:bg-cyan-600 transition-colors"
+>
+  Open Text
+</a>
                                           <iframe src={fileUrl} title={file.name} className="w-full h-96 border rounded bg-white" />
                                         </div>
                                       );
