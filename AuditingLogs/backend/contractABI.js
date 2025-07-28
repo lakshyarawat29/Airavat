@@ -1,0 +1,150 @@
+const abi = [
+  {
+    type: 'function',
+    name: 'createLog',
+    inputs: [
+      { name: 'userId', type: 'string', internalType: 'string' },
+      { name: 'organization', type: 'string', internalType: 'string' },
+      { name: 'dataType', type: 'string', internalType: 'string' },
+      { name: 'purpose', type: 'string', internalType: 'string' },
+      { name: 'accessLevel', type: 'string', internalType: 'string' },
+      { name: 'status', type: 'string', internalType: 'string' },
+      { name: 'userConsent', type: 'bool', internalType: 'bool' },
+      { name: 'dataMinimized', type: 'bool', internalType: 'bool' },
+      { name: 'zkProofUsed', type: 'bool', internalType: 'bool' },
+      { name: 'retentionDays', type: 'uint16', internalType: 'uint16' },
+    ],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    name: 'getLog',
+    inputs: [{ name: 'index', type: 'uint256', internalType: 'uint256' }],
+    outputs: [
+      {
+        name: '',
+        type: 'tuple',
+        internalType: 'struct DataAccessLogger.LogEntry',
+        components: [
+          { name: 'userId', type: 'string', internalType: 'string' },
+          {
+            name: 'organization',
+            type: 'string',
+            internalType: 'string',
+          },
+          { name: 'dataType', type: 'string', internalType: 'string' },
+          { name: 'purpose', type: 'string', internalType: 'string' },
+          {
+            name: 'accessLevel',
+            type: 'string',
+            internalType: 'string',
+          },
+          { name: 'status', type: 'string', internalType: 'string' },
+          { name: 'userConsent', type: 'bool', internalType: 'bool' },
+          { name: 'dataMinimized', type: 'bool', internalType: 'bool' },
+          { name: 'zkProofUsed', type: 'bool', internalType: 'bool' },
+          {
+            name: 'retentionDays',
+            type: 'uint16',
+            internalType: 'uint16',
+          },
+          {
+            name: 'timestamp',
+            type: 'uint256',
+            internalType: 'uint256',
+          },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'getLogCount',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'event',
+    name: 'LogCreated',
+    inputs: [
+      {
+        name: 'logId',
+        type: 'uint256',
+        indexed: true,
+        internalType: 'uint256',
+      },
+      {
+        name: 'userId',
+        type: 'string',
+        indexed: true,
+        internalType: 'string',
+      },
+      {
+        name: 'organization',
+        type: 'string',
+        indexed: false,
+        internalType: 'string',
+      },
+      {
+        name: 'dataType',
+        type: 'string',
+        indexed: false,
+        internalType: 'string',
+      },
+      {
+        name: 'purpose',
+        type: 'string',
+        indexed: false,
+        internalType: 'string',
+      },
+      {
+        name: 'accessLevel',
+        type: 'string',
+        indexed: false,
+        internalType: 'string',
+      },
+      {
+        name: 'status',
+        type: 'string',
+        indexed: false,
+        internalType: 'string',
+      },
+      {
+        name: 'userConsent',
+        type: 'bool',
+        indexed: false,
+        internalType: 'bool',
+      },
+      {
+        name: 'dataMinimized',
+        type: 'bool',
+        indexed: false,
+        internalType: 'bool',
+      },
+      {
+        name: 'zkProofUsed',
+        type: 'bool',
+        indexed: false,
+        internalType: 'bool',
+      },
+      {
+        name: 'retentionDays',
+        type: 'uint16',
+        indexed: false,
+        internalType: 'uint16',
+      },
+      {
+        name: 'timestamp',
+        type: 'uint256',
+        indexed: false,
+        internalType: 'uint256',
+      },
+    ],
+    anonymous: false,
+  },
+];
+
+module.exports = abi;

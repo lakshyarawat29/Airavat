@@ -1,0 +1,13 @@
+[profile.default]
+src = "contracts"
+out = "artifacts"
+libs = ["lib"]
+test = "test"
+cache_path = "cache"
+solc-version = "0.8.20"
+optimizer = true
+optimizer-runs = 200
+via_ir = true
+
+[rpc_endpoints]
+sepolia = "https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID"

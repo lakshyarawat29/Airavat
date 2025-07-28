@@ -21,6 +21,7 @@ export async function GET() {
 
     return NextResponse.json(requests);
   } catch (error) {
+    console.error('GET /user-requests error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch requests' },
       { status: 500 }
@@ -109,7 +110,6 @@ export async function POST(request: Request) {
       };
     }
 
-    // Agent Update Handler
     // Agent Update Handler
     if (reqBody.agent && reqBody.type) {
       updatePayload.$set = {

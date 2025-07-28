@@ -1,11 +1,9 @@
-// lib/mongodb.ts
 import { MongoClient } from 'mongodb';
 
-if (!process.env.MONGODB_URI) {
-  throw new Error('Please add your Mongo URI to .env.local');
-}
+const MONGODB_URI =
+  process.env.MONGODB_URI || 'mongodb://localhost:27017/bank-dashboard';
 
-const uri = process.env.MONGODB_URI;
+const uri = MONGODB_URI;
 const options = {};
 
 let client: MongoClient;

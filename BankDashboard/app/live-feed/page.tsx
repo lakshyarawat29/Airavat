@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,9 +30,9 @@ export interface UserRequest {
   }>;
 }
 
-//xyz
-
 export default function LiveFeedPage() {
+  const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
   const {
     data: requests,
     error,
@@ -42,6 +44,27 @@ export default function LiveFeedPage() {
     null
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    // Check if user has access to live feed
+    if (user && !['banker', 'manager', 'admin'].includes(user.role)) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, user, router]);
+
+  if (!isAuthenticated || !user) {
+    return null;
+  }
+
+  // Check role-based access
+  if (!['banker', 'manager', 'admin'].includes(user.role)) {
+    return null;
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -96,19 +119,35 @@ export default function LiveFeedPage() {
             <p className="text-gray-600 mt-1">
               Banking Request System Powered By Airavat
             </p>
+            <p className="text-sm text-gray-500 mt-1">
+              Logged in as: {user.name} ({user.role})
+            </p>
           </div>
-          <Link href="/">
+          <Link href="/dashboard">
             <Button
               variant="outline"
               className="flex items-center gap-2 bg-white"
             >
               <Home className="w-4 h-4" />
-              Home
+              Dashboard
             </Button>
           </Link>
         </div>
-        {isLoading && <p>Loading requests...</p>}
-        {error && <p className="text-red-600">Error: {error.message}</p>}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading requests...</p>
+            </div>
+          </div>
+        )}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-600">
+              Error loading requests: {error.message}
+            </p>
+          </div>
+        )}
         {!isLoading && !error && requests && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -227,6 +266,11 @@ export default function LiveFeedPage() {
               ))}
             </div>
           </>
+        )}
+        {!isLoading && !error && !requests && (
+          <div className="text-center py-12">
+            <p className="text-gray-600">No requests found.</p>
+          </div>
         )}
       </div>
       <RequestDetailModal
