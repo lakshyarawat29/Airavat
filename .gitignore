@@ -17,6 +17,7 @@ eggs/
 lib/
 lib64/
 !UserDashboard/lib/
+!BankDashboard/lib/
 parts/
 sdist/
 var/
