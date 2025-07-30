@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
 
     try {
       console.log('🔗 Fetching blockchain logs for privacy analytics...');
-      const response = await fetch('http://localhost:3000/api/logs');
+      const response = await fetch('https://airavat-auditing-backend.onrender.com/api/logs');
 
       if (response.ok) {
         const blockchainLogs = await response.json();
