@@ -67,7 +67,7 @@ async function testDashboardStats() {
     // Test API endpoint
     console.log('\n🌐 Testing API endpoint...');
     try {
-      const response = await fetch('http://localhost:3000/api/dashboard-stats');
+      const response = await fetch('https://airavat-auditing-backend.onrender.com/api/dashboard-stats');
       if (response.ok) {
         const data = await response.json();
         console.log('✅ API Response:', data);
