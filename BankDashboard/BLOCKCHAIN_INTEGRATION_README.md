@@ -6,7 +6,7 @@ This implementation integrates real blockchain data from the AuditingLogs smart 
 
 ## 🔗 **Blockchain Data Source**
 
-### AuditingLogs Smart Contract
+### AuditingLogs Smart   Contract
 
 - **Location**: `AuditingLogs/contracts/AuditLog.sol`
 - **Backend**: `AuditingLogs/backend/` (Express.js server)
