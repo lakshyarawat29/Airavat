@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Plot from 'react-plotly.js';
+import dynamic from 'next/dynamic';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +24,12 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePrivacyAnalytics } from '@/hooks/use-privacy-analytics';
-import logsData from '@/data/logs.json';
+
+// Dynamically import Plotly to avoid SSR issues
+const Plot = dynamic(() => import('react-plotly.js'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
+}) as any;
 
 interface PrivacyMetric {
   id: string;
@@ -42,9 +47,39 @@ export default function AnalyticsPage() {
     '1d' | '7d' | '30d' | '90d'
   >('7d');
   const [filteredLogs, setFilteredLogs] = useState<any[]>([]);
+  const [isClient, setIsClient] = useState(false);
   const { analytics, loading, error, refetch } = usePrivacyAnalytics();
 
+  // Ensure we're on the client side
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    // Check if user has access to analytics
+    if (user && !['auditor', 'manager', 'admin'].includes(user.role)) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, user, router]);
+
+  // Only process logs data on client side
+  useEffect(() => {
+    if (!isClient) return;
+
+    // Sample data for charts - you can replace this with actual data fetching
+    const sampleLogsData = [
+      { timestamp: '2024-01-01T00:00:00Z', organization: 'RBI', userConsent: true, dataMinimized: true },
+      { timestamp: '2024-01-02T00:00:00Z', organization: 'TestBank', userConsent: true, dataMinimized: false },
+      { timestamp: '2024-01-03T00:00:00Z', organization: 'DemoCorp', userConsent: false, dataMinimized: true },
+      { timestamp: '2024-01-04T00:00:00Z', organization: 'RBI', userConsent: true, dataMinimized: true },
+      { timestamp: '2024-01-05T00:00:00Z', organization: 'TestBank', userConsent: true, dataMinimized: true },
+    ];
+
     const now = new Date();
     let startDate: Date;
     if (selectedTimeframe === '1d')
@@ -56,10 +91,11 @@ export default function AnalyticsPage() {
     else startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
     setFilteredLogs(
-      logsData.filter((log) => new Date(log.timestamp) >= startDate)
+      sampleLogsData.filter((log) => new Date(log.timestamp) >= startDate)
     );
-  }, [selectedTimeframe]);
+  }, [selectedTimeframe, isClient]);
 
+  // Calculate chart data only on client side
   const dateCounts: Record<string, number> = {};
   filteredLogs.forEach((log) => {
     const dateStr = new Date(log.timestamp).toISOString().split('T')[0];
@@ -85,18 +121,6 @@ export default function AnalyticsPage() {
     (a, b) => new Date(a).getTime() - new Date(b).getTime()
   );
   const sortedCounts = sortedDates.map((date) => dateCounts[date]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
-    }
-
-    // Check if user has access to analytics
-    if (user && !['auditor', 'manager', 'admin'].includes(user.role)) {
-      router.push('/dashboard');
-    }
-  }, [isAuthenticated, user, router]);
 
   if (!isAuthenticated || !user) {
     return null;
@@ -560,24 +584,30 @@ export default function AnalyticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Plot
-                data={[
-                  {
-                    x: sortedDates,
-                    y: sortedCounts,
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    marker: { color: 'blue' },
-                  },
-                ]}
-                layout={{
-                  margin: { t: 30, r: 20, l: 40, b: 40 },
-                  title: { text: '' },
-                  xaxis: { title: { text: 'Date' } },
-                  yaxis: { title: { text: 'Access Count' } },
-                }}
-                style={{ width: '100%', height: '300px' }}
-              />
+              {isClient ? (
+                <Plot
+                  data={[
+                    {
+                      x: sortedDates,
+                      y: sortedCounts,
+                      type: 'scatter',
+                      mode: 'lines+markers',
+                      marker: { color: 'blue' },
+                    },
+                  ]}
+                  layout={{
+                    margin: { t: 30, r: 20, l: 40, b: 40 },
+                    title: { text: '' },
+                    xaxis: { title: { text: 'Date' } },
+                    yaxis: { title: { text: 'Access Count' } },
+                  }}
+                  style={{ width: '100%', height: '300px' }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -589,26 +619,32 @@ export default function AnalyticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Plot
-                data={[
-                  {
-                    labels: orgs, // department names
-                    values: compliancePercent, // compliance %
-                    type: 'pie',
-                    textinfo: 'label+percent', // show department + %
-                    textposition: 'inside',
+              {isClient ? (
+                <Plot
+                  data={[
+                    {
+                      labels: orgs, // department names
+                      values: compliancePercent, // compliance %
+                      type: 'pie',
+                      textinfo: 'label+percent', // show department + %
+                      textposition: 'inside',
 
-                    marker: {
-                      colors: ['#2ecc71', '#27ae60', '#1abc9c', '#16a085'], // green shades
+                      marker: {
+                        colors: ['#2ecc71', '#27ae60', '#1abc9c', '#16a085'], // green shades
+                      },
                     },
-                  },
-                ]}
-                layout={{
-                  margin: { t: 30, r: 20, l: 20, b: 20 },
-                  showlegend: true,
-                }}
-                style={{ width: '100%', height: '300px' }}
-              />
+                  ]}
+                  layout={{
+                    margin: { t: 30, r: 20, l: 20, b: 20 },
+                    showlegend: true,
+                  }}
+                  style={{ width: '100%', height: '300px' }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
