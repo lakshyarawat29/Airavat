@@ -18,8 +18,10 @@ import {
   TrendingUp,
   Users,
   FileText,
+  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useDashboardStats } from '@/hooks/use-dashboard-stats';
 
 const iconMap = {
   Activity,
@@ -32,6 +34,7 @@ const iconMap = {
 export default function DashboardPage() {
   const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
+  const { stats, loading, error, refetch } = useDashboardStats();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -115,14 +118,30 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Welcome back, {user.name}!
-          </h2>
-          <p className="text-gray-600">
-            You're logged in as a {user.role} in the {user.department}{' '}
-            department.
-          </p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Welcome back, {user.name}!
+            </h2>
+            <p className="text-gray-600">
+              You're logged in as a {user.role} in the {user.department}{' '}
+              department.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refetch}
+            disabled={loading}
+            className="flex items-center space-x-2"
+          >
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Activity className="w-4 h-4" />
+            )}
+            <span>Refresh Stats</span>
+          </Button>
         </div>
 
         {/* Quick Stats */}
@@ -137,7 +156,18 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-gray-600">
                     Active Requests
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">24</p>
+                  {loading ? (
+                    <div className="flex items-center space-x-2">
+                      <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
+                      <span className="text-gray-500">Loading...</span>
+                    </div>
+                  ) : error ? (
+                    <p className="text-red-500 text-sm">Error loading data</p>
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">
+                      {stats?.activeRequests || 0}
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -153,7 +183,18 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-gray-600">
                     Completed Today
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">12</p>
+                  {loading ? (
+                    <div className="flex items-center space-x-2">
+                      <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
+                      <span className="text-gray-500">Loading...</span>
+                    </div>
+                  ) : error ? (
+                    <p className="text-red-500 text-sm">Error loading data</p>
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">
+                      {stats?.completedToday || 0}
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -169,7 +210,18 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-gray-600">
                     Team Members
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">8</p>
+                  {loading ? (
+                    <div className="flex items-center space-x-2">
+                      <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
+                      <span className="text-gray-500">Loading...</span>
+                    </div>
+                  ) : error ? (
+                    <p className="text-red-500 text-sm">Error loading data</p>
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">
+                      {stats?.teamMembers || 0}
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -185,7 +237,18 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-gray-600">
                     Pending Reviews
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">5</p>
+                  {loading ? (
+                    <div className="flex items-center space-x-2">
+                      <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
+                      <span className="text-gray-500">Loading...</span>
+                    </div>
+                  ) : error ? (
+                    <p className="text-red-500 text-sm">Error loading data</p>
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900">
+                      {stats?.pendingReviews || 0}
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
