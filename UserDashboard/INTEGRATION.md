@@ -17,7 +17,7 @@ UserDashboard (Port 3001) → API Route → AuditingLogs Backend (Port 3000) →
 ### 1. API Route (`/app/api/blockchain-logs/route.ts`)
 
 - Authenticates users using JWT tokens from cookies
-- Fetches logs from AuditingLogs API filtered by userID
+- Fetches logs from AuditingLogs API filtered by user ID
 - Transforms blockchain data to match frontend interface
 - Handles error cases and authentication failures
 
