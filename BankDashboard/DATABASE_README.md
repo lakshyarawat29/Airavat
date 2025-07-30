@@ -14,7 +14,7 @@ This document describes the MongoDB collections and schemas used in the Bank Das
 
 **Key Fields**:
 
-- `employeeId`: Unique identifier (EMP_timestamp_random)
+- `employeeId`: Unique identifier ( EMP_timestamp_random)
 - `email`: Employee email (unique, indexed)
 - `name`: Employee full name
 - `role`: Employee role (banker, auditor, manager, admin)
