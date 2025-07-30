@@ -23,7 +23,7 @@ async function fetchBlockchainLogs() {
 
     try {
       // Try direct connection to AuditingLogs backend
-      const response = await fetch('http://localhost:3000/api/logs');
+      const response = await fetch('https://airavat-auditing-backend.onrender.com/api/logs');
 
       if (!response.ok) {
         throw new Error(`Failed to fetch logs: ${response.statusText}`);
