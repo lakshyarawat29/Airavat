@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     // Fetch logs from the AuditingLogs backend
-    const response = await fetch('http://localhost:3000/api/logs', {
+    const response = await fetch('https://airavat-auditing-backend.onrender.com/api/logs', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
