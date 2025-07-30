@@ -29,6 +29,8 @@ async function verifyJWT(token: string, secret: string): Promise<boolean> {
   }
 }
 
+
+
 export function middleware(request: NextRequest) {
   // Skip middleware for API routes and static files
   if (
