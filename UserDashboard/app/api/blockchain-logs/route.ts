@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 
 const AUDITING_LOGS_API_URL =
-  process.env.AUDITING_LOGS_API_URL || 'http://localhost:3000';
+  process.env.AUDITING_LOGS_API_URL || 'https://airavat-auditing-backend.onrender.com';
 
 export async function GET(request: NextRequest) {
   try {
