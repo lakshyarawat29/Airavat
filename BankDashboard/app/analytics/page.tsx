@@ -28,7 +28,11 @@ import { usePrivacyAnalytics } from '@/hooks/use-privacy-analytics';
 // Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import('react-plotly.js'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
+  loading: () => (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="h-8 w-8 animate-spin" />
+    </div>
+  ),
 }) as any;
 
 interface PrivacyMetric {
@@ -48,7 +52,8 @@ export default function AnalyticsPage() {
   >('7d');
   const [filteredLogs, setFilteredLogs] = useState<any[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const { analytics, loading, error, refetch } = usePrivacyAnalytics();
+  const { analytics, loading, error, refetch, lastUpdated, isStale } =
+    usePrivacyAnalytics();
 
   // Ensure we're on the client side
   useEffect(() => {
@@ -73,11 +78,36 @@ export default function AnalyticsPage() {
 
     // Sample data for charts - you can replace this with actual data fetching
     const sampleLogsData = [
-      { timestamp: '2024-01-01T00:00:00Z', organization: 'RBI', userConsent: true, dataMinimized: true },
-      { timestamp: '2024-01-02T00:00:00Z', organization: 'TestBank', userConsent: true, dataMinimized: false },
-      { timestamp: '2024-01-03T00:00:00Z', organization: 'DemoCorp', userConsent: false, dataMinimized: true },
-      { timestamp: '2024-01-04T00:00:00Z', organization: 'RBI', userConsent: true, dataMinimized: true },
-      { timestamp: '2024-01-05T00:00:00Z', organization: 'TestBank', userConsent: true, dataMinimized: true },
+      {
+        timestamp: '2024-01-01T00:00:00Z',
+        organization: 'RBI',
+        userConsent: true,
+        dataMinimized: true,
+      },
+      {
+        timestamp: '2024-01-02T00:00:00Z',
+        organization: 'TestBank',
+        userConsent: true,
+        dataMinimized: false,
+      },
+      {
+        timestamp: '2024-01-03T00:00:00Z',
+        organization: 'DemoCorp',
+        userConsent: false,
+        dataMinimized: true,
+      },
+      {
+        timestamp: '2024-01-04T00:00:00Z',
+        organization: 'RBI',
+        userConsent: true,
+        dataMinimized: true,
+      },
+      {
+        timestamp: '2024-01-05T00:00:00Z',
+        organization: 'TestBank',
+        userConsent: true,
+        dataMinimized: true,
+      },
     ];
 
     const now = new Date();
@@ -217,6 +247,20 @@ export default function AnalyticsPage() {
                 <BarChart3 className="w-3 h-3 mr-1" />
                 Blockchain Data
               </Badge>
+              {isStale && (
+                <Badge
+                  variant="outline"
+                  className="bg-yellow-50 text-yellow-700 border-yellow-200 ml-2"
+                >
+                  <AlertTriangle className="w-3 h-3 mr-1" />
+                  Cached Data
+                </Badge>
+              )}
+              {lastUpdated && (
+                <span className="text-xs text-gray-500 ml-2">
+                  Last updated: {lastUpdated.toLocaleTimeString()}
+                </span>
+              )}
             </div>
 
             <div className="flex items-center space-x-4">

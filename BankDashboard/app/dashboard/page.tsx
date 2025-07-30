@@ -19,6 +19,7 @@ import {
   Users,
   FileText,
   Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useDashboardStats } from '@/hooks/use-dashboard-stats';
@@ -34,7 +35,8 @@ const iconMap = {
 export default function DashboardPage() {
   const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
-  const { stats, loading, error, refetch } = useDashboardStats();
+  const { stats, loading, error, refetch, lastUpdated, isStale } =
+    useDashboardStats();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -127,6 +129,22 @@ export default function DashboardPage() {
               You're logged in as a {user.role} in the {user.department}{' '}
               department.
             </p>
+            <div className="flex items-center space-x-2 mt-2">
+              {isStale && (
+                <Badge
+                  variant="outline"
+                  className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs"
+                >
+                  <AlertTriangle className="w-3 h-3 mr-1" />
+                  Cached Data
+                </Badge>
+              )}
+              {lastUpdated && (
+                <span className="text-xs text-gray-500">
+                  Last updated: {lastUpdated.toLocaleTimeString()}
+                </span>
+              )}
+            </div>
           </div>
           <Button
             variant="outline"

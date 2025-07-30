@@ -71,7 +71,8 @@ interface BlockchainRecord {
 
 export function BlockchainLogViewer({ theme }: BlockchainLogViewerProps) {
   const themeClasses = getThemeClasses(theme);
-  const { logs, loading, error, refetch } = useBlockchainLogs();
+  const { logs, loading, error, refetch, lastUpdated, isStale } =
+    useBlockchainLogs();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dataTypeFilter, setDataTypeFilter] = useState('all');
@@ -270,6 +271,22 @@ export function BlockchainLogViewer({ theme }: BlockchainLogViewerProps) {
           <CardDescription className={themeClasses.mutedText}>
             Immutable record of all data access requests and their outcomes
           </CardDescription>
+          <div className="flex items-center space-x-2 mt-2">
+            {isStale && (
+              <Badge
+                variant="outline"
+                className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs"
+              >
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                Cached Data
+              </Badge>
+            )}
+            {lastUpdated && (
+              <span className={`text-xs ${themeClasses.mutedText}`}>
+                Last updated: {lastUpdated.toLocaleTimeString()}
+              </span>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
