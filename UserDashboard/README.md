@@ -11,7 +11,7 @@ A secure fintech data protection platform with JWT authentication and multi-agen
 - 📊 Consent Management Interface with Database Storage
 - 🔗 Blockchain Transparency
 - 🔒 Zero-Knowledge Proofs Demo
-- 📄 PDF File Access Control
+- 📄 PDF File Access Control .
 
 ## Setup Instructions
 
