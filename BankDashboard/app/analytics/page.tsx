@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePrivacyAnalytics } from '@/hooks/use-privacy-analytics';
-
+import logsData from '@/data/logs.json'; 
 // Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import('react-plotly.js'), {
   ssr: false,
@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
     else startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
     setFilteredLogs(
-      sampleLogsData.filter((log) => new Date(log.timestamp) >= startDate)
+      logsData.filter((log) => new Date(log.timestamp) >= startDate)
     );
   }, [selectedTimeframe, isClient]);
 
@@ -674,6 +674,10 @@ export default function AnalyticsPage() {
                       textposition: 'inside',
 
                       marker: {
+                        line: {
+                          color: 'black',
+                          width: 1,
+                        },
                         colors: ['#2ecc71', '#27ae60', '#1abc9c', '#16a085'], // green shades
                       },
                     },
