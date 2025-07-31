@@ -33,11 +33,15 @@ export async function GET(request: NextRequest) {
       }
     );
 
+    console.log("response: " ,response);
+
     if (!response.ok) {
       throw new Error(`Failed to fetch logs: ${response.statusText}`);
     }
 
     const logs = await response.json();
+
+    console.log("logs: " ,logs);
 
     // Transform the logs to match the frontend interface
     const transformedLogs = logs.map((log: any) => ({
@@ -60,6 +64,8 @@ export async function GET(request: NextRequest) {
       transactionHash: `0x${Math.random().toString(16).substr(2, 64)}`, // Mock transaction hash
       gasUsed: Math.floor(Math.random() * 50000) + 15000, // Mock gas used
     }));
+
+    console.log(transformedLogs);
 
     return NextResponse.json(transformedLogs);
   } catch (error) {
