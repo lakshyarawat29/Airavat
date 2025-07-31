@@ -2,7 +2,7 @@
 
 **Airavat** is a proof-of-concept developed for the SuRaksha hackathon under Theme 2: _Securing Sensitive Customer Data in Fintech Ecosystems with Responsible Data Sharing and Privacy Protection_. It leverages AI agents, zero-trust architecture, blockchain, and privacy-enhancing technologies to protect sensitive customer data (e.g., bank details, transaction histories) while enabling secure and compliant data sharing in fintech ecosystems.
 
-## Table of Contents
+## Table of  Contents
 
 - [Overview](#overview)
 - [Architecture](#architecture)
