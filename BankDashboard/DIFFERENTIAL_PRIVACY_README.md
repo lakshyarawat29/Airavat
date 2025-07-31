@@ -14,7 +14,7 @@ Differential Privacy is a mathematical framework that provides strong privacy gu
 
 - **Laplace Noise Generation**: Implements the Laplace mechanism for adding calibrated noise
 - **Private Count**: Calculates differentially private counts with configurable epsilon
-- **Private Average**: Computes differentially private averages with bounded sensitivity
+- **Private Average**: Computes differentially  private averages with bounded sensitivity
 
 ### 2. **Privacy Metrics**
 
