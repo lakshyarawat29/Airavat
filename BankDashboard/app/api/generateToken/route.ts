@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Call the webhook with the required format
-    const webhookUrl = process.env.WEBHOOK_URL || 'https://pharmacies-dryer-wy-mph.trycloudflare.com/webhook/data-submit-hook'
+    const webhookUrl = 'https://lower-classifieds-une-material.trycloudflare.com/webhook/data-submit-hook'
     const jwtToken = process.env.WEBHOOK_JWT_TOKEN || 'eyJhbGciOiJIUzI1NiJ9.e30.NO3TAh5-AR98dkx9UIgBDE-u4hZs4Rh7F0qu8iRfob8'
 
     // Prepare form data for the webhook
